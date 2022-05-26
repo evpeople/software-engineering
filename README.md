@@ -12,3 +12,7 @@
 
 ## 保底方案
 [保底的后台管理系统](https://learnku.com/docs/gin-gonic/1.7/go-gin-document/11352)
+
+## 使用方式
+1. docker-compose up
+2. 
