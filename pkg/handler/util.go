@@ -8,6 +8,7 @@ import (
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 var AuthMiddleware *jwt.GinJWTMiddleware
@@ -25,8 +26,8 @@ func init() {
 		Timeout:    time.Hour,
 		MaxRefresh: time.Hour,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(int64); ok {
-
+			logrus.Debug("in Pay load", data)
+			if v, ok := data.(int); ok {
 				return jwt.MapClaims{
 					"ID": v,
 				}
@@ -83,4 +84,8 @@ type UserParam struct {
 type UserResp struct {
 	UserID int
 	Token  string
+}
+
+func GetIdFromRequest(c *gin.Context) int {
+	return int(jwt.ExtractClaims(c)["ID"].(float64))
 }
