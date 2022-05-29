@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/evpeople/softEngineer/pkg/dal"
 	"github.com/evpeople/softEngineer/pkg/handler"
 	"github.com/gin-gonic/gin"
@@ -35,6 +37,17 @@ func setupRouter() *gin.Engine {
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
+	})
+	//使用 下面的 test.Use()语句，包裹你所开发的api组，如此方能在 传入的 gin.Context上面，
+	//通过 GetIdFromRequest方法获取用户的ID
+	test := r.Group("/test")
+	test.Use(handler.AuthMiddleware.MiddlewareFunc())
+	test.GET("/ping", func(ctx *gin.Context) {
+		id := handler.GetIdFromRequest(ctx)
+		ctx.JSON(http.StatusOK, gin.H{
+			"id": id,
+		})
+
 	})
 	return r
 }
