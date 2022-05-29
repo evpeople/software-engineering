@@ -35,7 +35,7 @@ func Register(c *gin.Context) {
 		if err != nil {
 			logrus.Debug(err)
 		}
-		token, _, _ := AuthMiddleware.TokenGenerator(id)
+		token, _, _ := AuthMiddleware.TokenGenerator(int(id))
 		SendRegisterResponse(c, errno.Success, &UserResp{UserID: int(id), Token: token})
 		return
 	} else {
