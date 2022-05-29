@@ -1,13 +1,17 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/evpeople/softEngineer/pkg/dal"
 	"github.com/evpeople/softEngineer/pkg/handler"
+	"github.com/evpeople/softEngineer/pkg/handler/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
+	scheduler.Init()
 	dal.Init()
 }
 func main() {
@@ -33,8 +37,20 @@ func setupRouter() *gin.Engine {
 	user := v1.Group("/user")
 	user.POST("/register", handler.Register)
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
+	user.POST("/charge", handler.Charge)
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
+	})
+	//使用 下面的 test.Use()语句，包裹你所开发的api组，如此方能在 传入的 gin.Context上面，
+	//通过 GetIdFromRequest方法获取用户的ID
+	test := r.Group("/test")
+	test.Use(handler.AuthMiddleware.MiddlewareFunc())
+	test.GET("/ping", func(ctx *gin.Context) {
+		id := handler.GetIdFromRequest(ctx)
+		ctx.JSON(http.StatusOK, gin.H{
+			"id": id,
+		})
+
 	})
 	return r
 }
