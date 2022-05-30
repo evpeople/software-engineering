@@ -5,7 +5,7 @@ import (
 
 	"github.com/evpeople/softEngineer/pkg/dal"
 	"github.com/evpeople/softEngineer/pkg/handler"
-	"github.com/evpeople/softEngineer/pkg/handler/scheduler"
+	"github.com/evpeople/softEngineer/pkg/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
