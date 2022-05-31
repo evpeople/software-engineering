@@ -31,7 +31,7 @@ func Cars(c *gin.Context) {
 		sendRegisterResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
-	carsInfoVar.WaitingTime = time.Now().Sub(t).String()
+	carsInfoVar.WaitingTime = time.Since(t).String()
 
 	SendCarsResponse(c, errno.Success, &carsInfoVar)
 }
