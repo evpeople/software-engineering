@@ -36,19 +36,11 @@ func setupRouter() *gin.Engine {
 	// 	TimestampFormat: "2006-01-02 15:04:05",
 	// })
 	logrus.SetLevel(logrus.DebugLevel)
-	v1 := r.Group("/v1")
-	user := v1.Group("/user")
-	user.POST("/register", handler.Register)
-	user.POST("/login", handler.AuthMiddleware.LoginHandler)
-	charge := v1.Group("/charge")
-	charge.POST("/come", handler.Charge)
-	charge.POST("/stop", handler.Stop)
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(200, "pong")
-	})
+
 	//使用 下面的 api组.Use()语句，包裹 middlewarefunc，如此方能在传入的 gin.Context上面，
 	//通过 GetIdFromRequest 方法获取用户的 ID
+
 	test := r.Group("/test")
 	test.Use(handler.AuthMiddleware.MiddlewareFunc())
 	test.GET("/ping", func(ctx *gin.Context) {
@@ -58,5 +50,21 @@ func setupRouter() *gin.Engine {
 		})
 
 	})
+
+	v1 := r.Group("/v1")
+	user := v1.Group("/user")
+	user.POST("/register", handler.Register)
+	user.POST("/login", handler.AuthMiddleware.LoginHandler)
+	charge := v1.Group("/charge")
+	charge.POST("/come", handler.Charge)
+
+	car := v1.Group("/car")
+	car.Use(handler.AuthMiddleware.MiddlewareFunc())
+	car.GET("/:id", handler.GetCarFromCarID)
+	car.POST("", handler.AddCar)
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(200, "pong")
+	})
+
 	return r
 }
