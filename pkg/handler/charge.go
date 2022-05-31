@@ -30,8 +30,11 @@ func Charge(c *gin.Context) {
 
 type ChargingResponse struct {
 	Resp       bool   `json:"resp"`
+
 	Num        int    `json:"num"`
-	StautsCode int    `json:"status_code"`
+
+	StatusCode int    `json:"status_code"`
+
 	StatusMsg  string `json:"status_msg"`
 }
 
@@ -43,7 +46,7 @@ type chargingRespData struct {
 func sendChargingResponse(c *gin.Context, err error, data chargingRespData) {
 	Err := errno.ConvertErr(err)
 	c.JSON(http.StatusOK, ChargingResponse{
-		StautsCode: Err.ErrCode,
+		StatusCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,
 		Resp:       data.Resp,
 		Num:        data.Num,
