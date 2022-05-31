@@ -23,6 +23,10 @@ func Cars(c *gin.Context) {
 		return
 	}
 
+	logrus.Debug(carsVar.CarCapacity)
+	logrus.Debug(carsVar.ChargingQuantity)
+	logrus.Debug(carsVar.StartWaitingTime)
+
 	//todo: waiting define of 'start waiting time'
 	// loc, _ := time.LoadLocation("Local")    //获取本地时区
 	// t, err := time.ParseInLocation(TimeLayoutStr, carsVar.StartWaitingTime, loc) //使用模板在对应时区转化为time.time类型
@@ -34,11 +38,11 @@ func Cars(c *gin.Context) {
 
 	SendCarsResponse(c, errno.Success, &CarsInfo{
 		UserID: userId,
-		//todo CarID: carID,
+		//CarID: carID,
 		CarID:             4,
 		CarCapacity:       carsVar.CarCapacity,
 		RequestedQuantity: carsVar.ChargingQuantity,
-		//todo WaitingTime: time.Now().Sub(t).String(),
+		//WaitingTime: time.Now().Sub(t).String(),
 		WaitingTime: carsVar.StartWaitingTime,
 	})
 }
