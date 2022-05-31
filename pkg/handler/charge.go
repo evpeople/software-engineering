@@ -21,11 +21,11 @@ func Charge(c *gin.Context) {
 	var params ChargingParam
 	if err := c.ShouldBind(&params); err != nil {
 		logrus.Debug("charging params not bind")
-		sendChargingResponse(c, errno.ConvertErr(err), nil)
+		SendBaseResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
 	num := scheduler.WhenCarComing(userId, carId, params.chargingType, params.chargingQuantity)
-	sendChargingResponse(c, errno.Success, &chargingRespData{num > 0, num})
+	sendChargingResponse(c, errno.Success, chargingRespData{num > 0, num})
 }
 
 type ChargingResponse struct {
@@ -40,15 +40,9 @@ type chargingRespData struct {
 	Num  int
 }
 
-func sendChargingResponse(c *gin.Context, err error, data *chargingRespData) {
+func sendChargingResponse(c *gin.Context, err error, data chargingRespData) {
 	Err := errno.ConvertErr(err)
-	if data == nil {
-		c.JSON(http.StatusOK, RegisterResponse{
-			StautsCode: Err.ErrCode,
-			StatusMsg:  Err.ErrMsg,
-		})
-		return
-	}
+
 	c.JSON(http.StatusOK, ChargingResponse{
 		StautsCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,

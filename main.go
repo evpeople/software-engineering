@@ -16,7 +16,10 @@ func init() {
 }
 func main() {
 	r := setupRouter()
-	r.Run(":8080")
+	err := r.Run(":8080")
+	if err != nil {
+		panic(err)
+	}
 }
 func setupRouter() *gin.Engine {
 	r := gin.New()
@@ -37,7 +40,7 @@ func setupRouter() *gin.Engine {
 	user := v1.Group("/user")
 	user.POST("/register", handler.Register)
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
-	charge:=v1.Group("/charge")
+	charge := v1.Group("/charge")
 	charge.POST("/come", handler.Charge)
 
 	r.GET("/ping", func(c *gin.Context) {
