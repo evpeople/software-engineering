@@ -47,8 +47,8 @@ func setupRouter() *gin.Engine {
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
-	//使用 下面的 test.Use()语句，包裹你所开发的api组，如此方能在 传入的 gin.Context上面，
-	//通过 GetIdFromRequest方法获取用户的ID
+	//使用 下面的 api组.Use()语句，包裹 middlewarefunc，如此方能在传入的 gin.Context上面，
+	//通过 GetIdFromRequest 方法获取用户的 ID
 	test := r.Group("/test")
 	test.Use(handler.AuthMiddleware.MiddlewareFunc())
 	test.GET("/ping", func(ctx *gin.Context) {
