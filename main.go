@@ -63,6 +63,11 @@ func setupRouter() *gin.Engine {
 	car.Use(handler.AuthMiddleware.MiddlewareFunc())
 	car.GET("/:id", handler.GetCarFromCarID)
 	car.POST("", handler.AddCar)
+
+	admin := v1.Group("/admin")
+	admin.Use(handler.AuthMiddleware.MiddlewareFunc())
+	admin.GET("/cars", handler.Cars)
+	admin.GET("/report", handler.Report)
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
