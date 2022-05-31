@@ -1,7 +1,7 @@
 # software-engineering
 
 ![workflow](https://github.com/evpeople/software-engineering/actions/workflows/go.yml/badge.svg)
-
+![workflow](https://github.com/evpeople/software-engineering/actions/workflows/golangci-lint.yml/badge.svg)
 ## 开发前的准备
 
 `go env -w GOPROXY=https://goproxy.cn,direct`
