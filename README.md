@@ -15,4 +15,6 @@
 
 ## 使用方式
 1. docker-compose up
-2. 
+
+2. go run main.go
+
