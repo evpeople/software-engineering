@@ -13,13 +13,6 @@ import (
 
 var AuthMiddleware *jwt.GinJWTMiddleware
 
-type RegisterResponse struct {
-	UserID     int    `json:"user_id"`
-	Token      string `json:"token"`
-	StautsCode int    `json:"status_code"`
-	StatusMsg  string `json:"status_msg"`
-}
-
 func init() {
 	AuthMiddleware, _ = jwt.New(&jwt.GinJWTMiddleware{
 		Key:        []byte(constants.SecretKey),
@@ -60,7 +53,20 @@ func init() {
 		},
 	})
 }
-func SendRegisterResponse(c *gin.Context, err error, data *UserResp) {
+
+type UserParam struct {
+	UserName string `json:"username"`
+	PassWord string `json:"password"`
+}
+type UserResp struct {
+	UserID int
+	Token  string
+}
+
+func GetIdFromRequest(c *gin.Context) int {
+	return int(jwt.ExtractClaims(c)["ID"].(float64))
+}
+func SendBaseResponse(c *gin.Context, err error, data *UserResp) {
 	Err := errno.ConvertErr(err)
 	if data == nil {
 		c.JSON(http.StatusOK, RegisterResponse{
@@ -75,17 +81,4 @@ func SendRegisterResponse(c *gin.Context, err error, data *UserResp) {
 		UserID:     data.UserID,
 		Token:      data.Token,
 	})
-}
-
-type UserParam struct {
-	UserName string `json:"username"`
-	PassWord string `json:"password"`
-}
-type UserResp struct {
-	UserID int
-	Token  string
-}
-
-func GetIdFromRequest(c *gin.Context) int {
-	return int(jwt.ExtractClaims(c)["ID"].(float64))
 }
