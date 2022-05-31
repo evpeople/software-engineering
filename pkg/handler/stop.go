@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -22,21 +23,19 @@ func Stop(c *gin.Context) {
 		logrus.Debug(params)
 		sendStopResponse(c, errno.ParamErr)
 	}
-	tmp_id, _ := db.GetUserIDFromCarID(context.Background(), params.CarId)
-	if userId != tmp_id {
+	temp_car_id, _ := strconv.ParseInt(params.CarId, 10, 64)
+	tmp_id, _ := db.GetUserIDFromCarID(context.Background(), temp_car_id)
+	if userId != strconv.Itoa(tmp_id) {
 		logrus.Debug(params)
 		sendStopResponse(c, errno.ParamErr)
 	}
-	carId := params.CarId
-	// todo: change isCharging
-	car, _ := db.GetCarFromCarID(context.Background(), carId)
+	car, _ := db.GetCarFromCarID(context.Background(), temp_car_id)
 	car.IsCharge = false
 	sendStopResponse(c, errno.Success)
 }
 
 type StopParam struct {
-	UserId string `json:"user_id"`
-	CarId  string `json:"car_id"`
+	CarId string `json:"car_id"`
 }
 
 type StopResponse struct {
