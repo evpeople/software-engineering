@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
@@ -11,9 +12,8 @@ import (
 )
 
 type CarParam struct {
-	Token string `json:"token"`
-	Cap   int    `json:"cap"`
-	ID    int    `json:"car_id"`
+	Cap int `json:"cap"`
+	ID  int `json:"car_id"`
 }
 type CarResp struct {
 	UserID int `json:"user_id"`
@@ -28,6 +28,7 @@ func AddCar(c *gin.Context) {
 		sendCarResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
+	logrus.Debug(carP)
 	car, err := db.NewCar(carP.Cap, GetIdFromRequest(c))
 	if err != nil {
 		logrus.Debug("New Car  wrong", err.Error())
@@ -35,15 +36,15 @@ func AddCar(c *gin.Context) {
 
 	}
 	db.CreateCar(context.Background(), []*db.Car{car})
+	sendCarResponse(c, nil, &CarResp{car.UserRefer, car.BatteryCap, int(car.ID)})
 }
 func GetCarFromCarID(c *gin.Context) {
-	var carP CarParam
-	if err := c.ShouldBind(&carP); err != nil {
-		logrus.Debug("not bind AddCar")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logrus.Debug(err)
 		sendCarResponse(c, errno.ConvertErr(err), nil)
-		return
 	}
-	car, err := db.GetCarFromCarID(context.Background(), int64(carP.ID))
+	car, err := db.GetCarFromCarID(context.Background(), int64(id))
 	if err != nil {
 		logrus.Debug("Get Car  wrong", err.Error())
 		sendCarResponse(c, errno.ConvertErr(err), nil)
