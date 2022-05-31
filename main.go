@@ -35,12 +35,17 @@ func setupRouter() *gin.Engine {
 	logrus.SetLevel(logrus.DebugLevel)
 	v1 := r.Group("/v1")
 	user := v1.Group("/user")
+	admin := v1.Group("/admin")
 	user.POST("/register", handler.Register)
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
 	user.POST("/charge", handler.Charge)
+	admin.GET("/cars", handler.Cars)
+	admin.GET("/report", handler.Report)
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
+
 	//使用 下面的 test.Use()语句，包裹你所开发的api组，如此方能在 传入的 gin.Context上面，
 	//通过 GetIdFromRequest方法获取用户的ID
 	test := r.Group("/test")
