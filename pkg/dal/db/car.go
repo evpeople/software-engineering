@@ -18,7 +18,7 @@ func (u *Car) TableName() string {
 	return constants.CarsTableName
 }
 
-// MGetUsers multiple get list of user info
+// MGetCars multiple get list of Car info
 func MGetCarFromUserID(ctx context.Context, userID int64) ([]*Car, error) {
 	res := make([]*Car, 0)
 	// res := new(Car)
