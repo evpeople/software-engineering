@@ -36,7 +36,10 @@ func AddCar(c *gin.Context) {
 		sendCarResponse(c, errno.ConvertErr(err), nil)
 
 	}
-	db.CreateCar(context.Background(), []*db.Car{car})
+	err = db.CreateCar(context.Background(), []*db.Car{car})
+	if err != nil {
+		sendCarResponse(c, errno.ConvertErr(err), nil)
+	}
 	sendCarResponse(c, nil, &CarResp{car.UserRefer, car.BatteryCap, int(car.ID)})
 }
 func GetCarFromCarID(c *gin.Context) {
