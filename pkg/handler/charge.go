@@ -32,14 +32,14 @@ type ChargingParam struct {
 
 type ChargingResponse struct {
 	Resp       bool   `json:"resp"`
-	StautsCode int    `json:"status_code"`
+	StatusCode int    `json:"status_code"`
 	StatusMsg  string `json:"status_msg"`
 }
 
 func sendChargingResponse(c *gin.Context, err error, ok bool) {
 	Err := errno.ConvertErr(err)
 	c.JSON(http.StatusOK, ChargingResponse{
-		StautsCode: Err.ErrCode,
+		StatusCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,
 		Resp:       ok,
 	})
