@@ -12,6 +12,7 @@ type Car struct {
 	BatteryCap int
 	UserRefer  int
 	User       User `gorm:"foreignKey:UserRefer"`
+	IsCharge   bool
 }
 
 func (u *Car) TableName() string {
@@ -49,6 +50,13 @@ func GetUserIDFromCarID(ctx context.Context, carID int64) (int, error) {
 // CreateCar create Car info
 func CreateCar(ctx context.Context, cars []*Car) error {
 	return DB.WithContext(ctx).Create(cars).Error
+}
+func IsCharging(carID int) (bool, error) {
+	car, err := GetCarFromCarID(context.Background(), int64(carID))
+	if err != nil {
+		return false, err
+	}
+	return car.IsCharge, nil
 }
 func NewCar(batteryCap int, userID int) (*Car, error) {
 	user, err := MGetUser(context.Background(), int64(userID))
