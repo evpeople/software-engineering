@@ -33,4 +33,10 @@ func Init() {
 	if err = m.CreateTable(&User{}); err != nil {
 		panic(err)
 	}
+	if m.HasTable(&Car{}) {
+		return
+	}
+	if err = m.CreateTable(&Car{}); err != nil {
+		panic(err)
+	}
 }
