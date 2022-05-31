@@ -20,4 +20,5 @@ cmd/core/user/output
 # Go workspace file
 go.work
 
+.vscode/*
 *.vscode

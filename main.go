@@ -5,11 +5,13 @@ import (
 
 	"github.com/evpeople/softEngineer/pkg/dal"
 	"github.com/evpeople/softEngineer/pkg/handler"
+	"github.com/evpeople/softEngineer/pkg/handler/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
+	scheduler.Init()
 	dal.Init()
 }
 func main() {
@@ -35,6 +37,7 @@ func setupRouter() *gin.Engine {
 	user := v1.Group("/user")
 	user.POST("/register", handler.Register)
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
+	user.POST("/charge", handler.Charge)
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
