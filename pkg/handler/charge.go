@@ -21,13 +21,13 @@ func Charge(c *gin.Context) {
 		return
 	}
 
-	ok := scheduler.WhenCarComing(userId, carId, params.chargingType, params.chargingQuantity)
+	ok := scheduler.WhenCarComing(userId, carId, params.ChargingType, params.ChargingQuantity)
 	sendChargingResponse(c, errno.Success, ok)
 }
 
 type ChargingParam struct {
-	chargingType     int `json:"charging_type"`
-	chargingQuantity int `json:"charging_quantity"`
+	ChargingType     int `json:"charging_type"`
+	ChargingQuantity int `json:"charging_quantity"`
 }
 
 type ChargingResponse struct {
