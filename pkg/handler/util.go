@@ -66,3 +66,19 @@ type UserResp struct {
 func GetIdFromRequest(c *gin.Context) int {
 	return int(jwt.ExtractClaims(c)["ID"].(float64))
 }
+func SendBaseResponse(c *gin.Context, err error, data *UserResp) {
+	Err := errno.ConvertErr(err)
+	if data == nil {
+		c.JSON(http.StatusOK, RegisterResponse{
+			StautsCode: Err.ErrCode,
+			StatusMsg:  Err.ErrMsg,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, RegisterResponse{
+		StautsCode: Err.ErrCode,
+		StatusMsg:  Err.ErrMsg,
+		UserID:     data.UserID,
+		Token:      data.Token,
+	})
+}
