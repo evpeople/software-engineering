@@ -14,6 +14,8 @@ const TimeLayoutStr = "2006-01-02 15:04:05"
 func Cars(c *gin.Context) {
 	userId := GetIdFromRequest(c)
 
+	//todo: add function to get car id
+
 	var carsVar CarsParam
 	if err := c.ShouldBind(&carsVar); err != nil {
 		logrus.Debug("cars parameters failed to bind.")
@@ -21,9 +23,9 @@ func Cars(c *gin.Context) {
 		return
 	}
 
-	//todo: 等待 car 的定义完善——进入等待区的时间
+	//todo: waiting define of 'start waiting time'
 	// loc, _ := time.LoadLocation("Local")    //获取本地时区
-	// t, err := time.ParseInLocation(TimeLayoutStr, carsVar.startWaitingTime, loc) //使用模板在对应时区转化为time.time类型
+	// t, err := time.ParseInLocation(TimeLayoutStr, carsVar.StartWaitingTime, loc) //使用模板在对应时区转化为time.time类型
 	// if err != nil {
 	// 	logrus.Debug("start waiting time parse unsuccessful")
 	// 	sendRegisterResponse(c, errno.ConvertErr(err), nil)
@@ -31,31 +33,34 @@ func Cars(c *gin.Context) {
 	// }
 
 	SendCarsResponse(c, errno.Success, &CarsInfo{
-		UserID:          userId,
-		CarCapacity:     carsVar.CarCapacity,
-		RequestQuantity: carsVar.RequestQuantity,
-		// WaitingTime: time.Now().Sub(t).String(),
-		WaitingTime: "1h20m10s",
+		UserID: userId,
+		//todo CarID: carID,
+		CarID:             4,
+		CarCapacity:       carsVar.CarCapacity,
+		RequestedQuantity: carsVar.ChargingQuantity,
+		//todo WaitingTime: time.Now().Sub(t).String(),
+		WaitingTime: carsVar.StartWaitingTime,
 	})
 }
 
 type CarsParam struct {
-	CarCapacity     int
-	RequestQuantity int
-	// startWaitingTime     string
+	CarCapacity      int    `json:"car_capacity"`
+	ChargingQuantity int    `json:"charging_quantity"`
+	StartWaitingTime string `json:"start_waiting_time"`
 }
 
 type CarsInfo struct {
-	UserID          int
-	CarCapacity     int
-	RequestQuantity int
-	WaitingTime     string
+	UserID            int    `json:"user_id"`
+	CarID             int    `json:"car_id"`
+	CarCapacity       int    `json:"car_capacity"`
+	RequestedQuantity int    `json:"requested_quantity"`
+	WaitingTime       string `json:"waiting_time"`
 }
 
 type CarsResp struct {
-	StatusMsg  string
-	StautsCode int
-	cars       CarsInfo
+	StatusMsg  string   `json:"status_msg"`
+	StautsCode int      `json:"status_code"`
+	Cars       CarsInfo `json:"cars"`
 }
 
 func SendCarsResponse(c *gin.Context, err error, data *CarsInfo) {
@@ -70,11 +75,12 @@ func SendCarsResponse(c *gin.Context, err error, data *CarsInfo) {
 	c.JSON(http.StatusOK, CarsResp{
 		StatusMsg:  Err.ErrMsg,
 		StautsCode: Err.ErrCode,
-		cars: CarsInfo{
-			UserID:          data.UserID,
-			CarCapacity:     data.CarCapacity,
-			RequestQuantity: data.RequestQuantity,
-			WaitingTime:     data.WaitingTime,
+		Cars: CarsInfo{
+			UserID:            data.UserID,
+			CarID:             data.CarID,
+			CarCapacity:       data.CarCapacity,
+			RequestedQuantity: data.RequestedQuantity,
+			WaitingTime:       data.WaitingTime,
 		},
 	})
 }
