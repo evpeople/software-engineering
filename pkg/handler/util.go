@@ -64,5 +64,6 @@ type UserResp struct {
 }
 
 func GetIdFromRequest(c *gin.Context) int {
+	
 	return int(jwt.ExtractClaims(c)["ID"].(float64))
 }
