@@ -40,7 +40,9 @@ func setupRouter() *gin.Engine {
 	user := v1.Group("/user")
 	user.POST("/register", handler.Register)
 	user.POST("/login", handler.AuthMiddleware.LoginHandler)
+
 	charge := v1.Group("/charge")
+	charge.Use(handler.AuthMiddleware.MiddlewareFunc())
 	charge.POST("/come", handler.Charge)
 
 	r.GET("/ping", func(c *gin.Context) {
