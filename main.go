@@ -53,6 +53,7 @@ func setupRouter() *gin.Engine {
 	//通过 GetIdFromRequest方法获取用户的ID
 	test := r.Group("/test")
 	test.Use(handler.AuthMiddleware.MiddlewareFunc())
+	test.Use(handler.Cars)
 	test.GET("/ping", func(ctx *gin.Context) {
 		id := handler.GetIdFromRequest(ctx)
 		ctx.JSON(http.StatusOK, gin.H{
