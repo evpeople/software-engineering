@@ -13,13 +13,6 @@ import (
 
 var AuthMiddleware *jwt.GinJWTMiddleware
 
-type RegisterResponse struct {
-	UserID     int    `json:"user_id"`
-	Token      string `json:"token"`
-	StautsCode int    `json:"status_code"`
-	StatusMsg  string `json:"status_msg"`
-}
-
 func init() {
 	AuthMiddleware, _ = jwt.New(&jwt.GinJWTMiddleware{
 		Key:        []byte(constants.SecretKey),
@@ -58,22 +51,6 @@ func init() {
 				StatusMsg:  errno.Success.ErrMsg,
 			})
 		},
-	})
-}
-func SendRegisterResponse(c *gin.Context, err error, data *UserResp) {
-	Err := errno.ConvertErr(err)
-	if data == nil {
-		c.JSON(http.StatusOK, RegisterResponse{
-			StautsCode: Err.ErrCode,
-			StatusMsg:  Err.ErrMsg,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, RegisterResponse{
-		StautsCode: Err.ErrCode,
-		StatusMsg:  Err.ErrMsg,
-		UserID:     data.UserID,
-		Token:      data.Token,
 	})
 }
 

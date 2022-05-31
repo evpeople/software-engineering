@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
@@ -19,13 +20,13 @@ func Register(c *gin.Context) {
 
 	if err := c.ShouldBind(&registerVar); err != nil {
 		logrus.Debug("not bind")
-		SendRegisterResponse(c, errno.ConvertErr(err), nil)
+		sendRegisterResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
 
 	if len(registerVar.UserName) == 0 || len(registerVar.PassWord) == 0 {
 		logrus.Debug(registerVar)
-		SendRegisterResponse(c, errno.ParamErr, nil)
+		sendRegisterResponse(c, errno.ParamErr, nil)
 		return
 	}
 	_, err := db.QueryUserExist(context.Background(), registerVar.UserName)
@@ -36,10 +37,10 @@ func Register(c *gin.Context) {
 			logrus.Debug(err)
 		}
 		token, _, _ := AuthMiddleware.TokenGenerator(int(id))
-		SendRegisterResponse(c, errno.Success, &UserResp{UserID: int(id), Token: token})
+		sendRegisterResponse(c, errno.Success, &UserResp{UserID: int(id), Token: token})
 		return
 	} else {
-		SendRegisterResponse(c, errno.UserAlreadyExistErr, &UserResp{UserID: -1, Token: ""})
+		sendRegisterResponse(c, errno.UserAlreadyExistErr, &UserResp{UserID: -1, Token: ""})
 	}
 
 }
@@ -68,4 +69,27 @@ func CheckUser(loginVar UserParam) (int, error) {
 	}
 	password := fmt.Sprintf("%x", h.Sum(nil))
 	return db.CheckUser(context.Background(), loginVar.UserName, password)
+}
+func sendRegisterResponse(c *gin.Context, err error, data *UserResp) {
+	Err := errno.ConvertErr(err)
+	if data == nil {
+		c.JSON(http.StatusOK, RegisterResponse{
+			StautsCode: Err.ErrCode,
+			StatusMsg:  Err.ErrMsg,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, RegisterResponse{
+		StautsCode: Err.ErrCode,
+		StatusMsg:  Err.ErrMsg,
+		UserID:     data.UserID,
+		Token:      data.Token,
+	})
+}
+
+type RegisterResponse struct {
+	UserID     int    `json:"user_id"`
+	Token      string `json:"token"`
+	StautsCode int    `json:"status_code"`
+	StatusMsg  string `json:"status_msg"`
 }
