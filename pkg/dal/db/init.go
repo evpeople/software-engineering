@@ -27,16 +27,14 @@ func Init() {
 	}
 
 	m := DB.Migrator()
-	if m.HasTable(&User{}) {
-		return
+	if !m.HasTable(&User{}) {
+		if err = m.CreateTable(&User{}); err != nil {
+			panic(err)
+		}
 	}
-	if err = m.CreateTable(&User{}); err != nil {
-		panic(err)
-	}
-	if m.HasTable(&Car{}) {
-		return
-	}
-	if err = m.CreateTable(&Car{}); err != nil {
-		panic(err)
+	if !m.HasTable(&Car{}) {
+		if err = m.CreateTable(&Car{}); err != nil {
+			panic(err)
+		}
 	}
 }
