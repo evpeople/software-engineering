@@ -11,10 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CarParam struct {
-	Cap int `json:"cap"`
-	ID  int `json:"car_id"`
-}
 type CarResp struct {
 	UserID int `json:"user_id"`
 	Cap    int `json:"cap"`
@@ -22,14 +18,19 @@ type CarResp struct {
 }
 
 func AddCar(c *gin.Context) {
-	var carP CarParam
-	if err := c.ShouldBind(&carP); err != nil {
-		logrus.Debug("not bind AddCar")
+	// var carP CarParam
+	// if err := c.ShouldBind(&carP); err != nil {
+	// 	logrus.Debug("not bind AddCar")
+	// 	sendCarResponse(c, errno.ConvertErr(err), nil)
+	// 	return
+	// }
+	// logrus.Debug(carP)
+	cap, err := strconv.Atoi(c.Query("cap"))
+	if err != nil {
+		logrus.Debug(err)
 		sendCarResponse(c, errno.ConvertErr(err), nil)
-		return
 	}
-	logrus.Debug(carP)
-	car, err := db.NewCar(carP.Cap, GetIdFromRequest(c))
+	car, err := db.NewCar(cap, GetIdFromRequest(c))
 	if err != nil {
 		logrus.Debug("New Car  wrong", err.Error())
 		sendCarResponse(c, errno.ConvertErr(err), nil)
