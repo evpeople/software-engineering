@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/evpeople/softEngineer/pkg/scheduler"
@@ -10,7 +11,7 @@ import (
 )
 
 func Charge(c *gin.Context) {
-	userId := string(GetIdFromRequest(c))
+	userId := strconv.Itoa(GetIdFromRequest(c))
 	carId := "0"
 
 	var params ChargingParam
