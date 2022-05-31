@@ -54,14 +54,13 @@ func (s *Scheduler) isFull() bool {
 }
 
 //whenCarComing trys to put the car in the queue, if the queue is full return false else return true
-func (s *Scheduler) whenCarComing(userId string, carId string, chargingType int, chargingQuantity int) bool {
+func WhenCarComing(userId string, carId string, chargingType int, chargingQuantity int) bool {
 	if s.isFull() {
 		return false
 	} else {
 		s.waitingArea.PushBack(NewCar(userId, carId, chargingType, chargingQuantity))
 		return true
 	}
-	//todo: this func should do more maybe
 
 }
 

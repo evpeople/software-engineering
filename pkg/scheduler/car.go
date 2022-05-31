@@ -10,6 +10,7 @@ type Car struct {
 
 func NewCar(userId string, carId string, chargingType int, chargingQuantity int) *Car {
 	return &Car{userId, carId, chargingType, chargingQuantity, false}
+	
 }
 
 //todo: other methods of Car
