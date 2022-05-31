@@ -17,7 +17,7 @@ func Charge(c *gin.Context) {
 	var params ChargingParam
 	if err := c.ShouldBind(&params); err != nil {
 		logrus.Debug("charging params not bind")
-		SendRegisterResponse(c, errno.ConvertErr(err), nil)
+		SendBaseResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
 
