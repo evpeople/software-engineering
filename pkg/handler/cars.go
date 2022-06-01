@@ -46,7 +46,7 @@ type CarsInfo struct {
 
 type CarsResp struct {
 	StatusMsg  string   `json:"status_msg"`
-	StautsCode int      `json:"status_code"`
+	StatusCode int      `json:"status_code"`
 	Cars       CarsInfo `json:"cars"`
 }
 
@@ -55,13 +55,13 @@ func SendCarsResponse(c *gin.Context, err error, data *CarsInfo) {
 	if data == nil {
 		c.JSON(http.StatusOK, CarsResp{
 			StatusMsg:  Err.ErrMsg,
-			StautsCode: Err.ErrCode,
+			StatusCode: Err.ErrCode,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, CarsResp{
 		StatusMsg:  Err.ErrMsg,
-		StautsCode: Err.ErrCode,
+		StatusCode: Err.ErrCode,
 		Cars: CarsInfo{
 			UserID:            data.UserID,
 			CarID:             data.CarID,

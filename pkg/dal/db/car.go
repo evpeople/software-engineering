@@ -51,6 +51,9 @@ func GetUserIDFromCarID(ctx context.Context, carID int64) (int, error) {
 func CreateCar(ctx context.Context, cars []*Car) error {
 	return DB.WithContext(ctx).Create(cars).Error
 }
+func UpdateCar(ctx context.Context, a_car *Car) error {
+	return DB.WithContext(ctx).Updates(a_car).Error
+}
 func IsCharging(carID int) (bool, error) {
 	car, err := GetCarFromCarID(context.Background(), int64(carID))
 	if err != nil {

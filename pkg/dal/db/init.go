@@ -37,4 +37,9 @@ func Init() {
 			panic(err)
 		}
 	}
+	if !m.HasTable(&Bill{}) {
+		if err = m.CreateTable(&Bill{}); err != nil {
+			panic(err)
+		}
+	}
 }
