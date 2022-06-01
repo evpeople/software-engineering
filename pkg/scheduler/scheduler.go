@@ -21,6 +21,7 @@ func Init() {
 	s.fastCharingPileNum = DefaultFastCharingPileNum
 	s.waitingAreaSize = DefaultWaitingAreaSize
 	s.chargingQueueLen = DefaultChargingQueueLen
+	s.number = 0
 	//todo: init by reading config text
 	//fastCharingPile
 	s.fastCharingPile = make([]*list.List, s.fastCharingPileNum)
@@ -35,10 +36,10 @@ func Init() {
 		s.trickleChargingPile[i] = list.New()
 	}
 	s.waitingArea = list.New()
-	s.waitingArea.PushBack(NewCar("", "", 1, 1))
 }
 
 type Scheduler struct {
+	number                 int //the number of the last car entered the waiting area
 	trickleChargingPileNum int //trickle means slow
 	fastCharingPileNum     int
 	waitingAreaSize        int
@@ -54,12 +55,13 @@ func (s *Scheduler) isFull() bool {
 }
 
 //whenCarComing trys to put the car in the queue, if the queue is full return false else return true
-func WhenCarComing(userId string, carId string, chargingType int, chargingQuantity int) bool {
+func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity int) int {
 	if s.isFull() {
-		return false
+		return -1 //queue if full
 	} else {
 		s.waitingArea.PushBack(NewCar(userId, carId, chargingType, chargingQuantity))
-		return true
+		s.number++
+		return s.number
 	}
 
 }
