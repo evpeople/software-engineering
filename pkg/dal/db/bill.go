@@ -28,10 +28,22 @@ func (u *Bill) TableName() string {
 
 func GetBillFromBillId(ctx context.Context, BillID int64) (*Bill, error) {
 	res := new(Bill)
-	if err := DB.WithContext(ctx).Where("id = ?", BillID).Find(&res).Error; err != nil {
+	if err := DB.WithContext(ctx).Where("bill_id = ?", BillID).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+func GetBillFromId(ctx context.Context, ID int64) (*Bill, error) {
+	res := new(Bill)
+	if err := DB.WithContext(ctx).Where("id = ?", ID).Find(&res).Error; err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func UpdateBill(ctx context.Context, a_bill *Bill) error {
+	return DB.WithContext(ctx).Updates(a_bill).Error
 }
 
 func CreateBill(ctx context.Context, bills []*Bill) error {

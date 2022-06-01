@@ -36,6 +36,7 @@ func Stop(c *gin.Context) {
 	// 修改车辆状态
 	car, _ := db.GetCarFromCarID(context.Background(), temp_car_id)
 	car.IsCharge = false
+	db.UpdateCar(context.Background(), car)
 
 	// 修改对应详单
 	bill_id, _ := strconv.ParseInt(params.BillId, 10, 64)
@@ -60,6 +61,9 @@ func Stop(c *gin.Context) {
 	bill.ServiceFee = 0.8 * bill.ChargeQuantity
 	bill.ChargeFee = CalChargeFee(bill.StartTime, bill.EndTime, bill.ChargeQuantity)
 	bill.TotalFee = bill.ServiceFee + bill.ChargeFee
+
+	db.UpdateBill(context.Background(), bill)
+
 	sendStopResponse(c, errno.Success)
 }
 

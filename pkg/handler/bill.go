@@ -18,7 +18,7 @@ func GetBill(c *gin.Context) {
 		sendBillResponse(c, errno.ConvertErr(err), nil)
 	}
 	// get bill from id
-	bill, err := db.GetBillFromBillId(context.Background(), int64(id))
+	bill, err := db.GetBillFromId(context.Background(), int64(id))
 	if err != nil {
 		logrus.Debug("Get Bill	wrong", err.Error())
 		sendBillResponse(c, errno.ConvertErr(err), nil)
