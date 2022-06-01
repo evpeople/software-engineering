@@ -2,8 +2,6 @@ package scheduler
 
 import (
 	"container/list"
-
-	"github.com/evpeople/softEngineer/pkg/errno"
 )
 
 // 充电桩状态的枚举类型
@@ -39,46 +37,46 @@ type Pile struct {
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
-// 判断当前充电桩的队列是否满
-func (p *Pile) isFull() bool {
-	return p.CarsCharging.Len() >= p.MaxWaitingNum
-}
+// // 判断当前充电桩的队列是否满
+// func (p *Pile) isFull() bool {
+// 	return p.CarsCharging.Len() >= p.MaxWaitingNum
+// }
 
-func (p *Pile) close() (bool, errno.ErrNo) {
-	switch p.Status {
-	case Off:
-		return true, errno.Success
-	case On:
-		p.Status = Off
-		return true, errno.Success
-	case Breakdown:
-		return false, errno.TurnOffBreakdownPileErr
-	case Charging:
-		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
-		// 此处暂时作为 充电中不能关机处理
-		return false, errno.TurnOffChargingPileErr
-	default:
-		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
-	}
-}
+// func (p *Pile) close() (bool, errno.ErrNo) {
+// 	switch p.Status {
+// 	case Off:
+// 		return true, errno.Success
+// 	case On:
+// 		p.Status = Off
+// 		return true, errno.Success
+// 	case Breakdown:
+// 		return false, errno.TurnOffBreakdownPileErr
+// 	case Charging:
+// 		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
+// 		// 此处暂时作为 充电中不能关机处理
+// 		return false, errno.TurnOffChargingPileErr
+// 	default:
+// 		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
+// 	}
+// }
 
-func (p *Pile) open() (bool, errno.ErrNo) {
-	switch p.Status {
-	case Off:
-		p.Status = On
-		return true, errno.Success
-	case On:
-		return true, errno.Success
-	case Breakdown:
-		return false, errno.TurnOffBreakdownPileErr
-	case Charging:
-		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
-		// 此处暂时作为 充电中不能关机处理
-		return false, errno.TurnOffChargingPileErr
-	default:
-		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
-	}
-}
+// func (p *Pile) open() (bool, errno.ErrNo) {
+// 	switch p.Status {
+// 	case Off:
+// 		p.Status = On
+// 		return true, errno.Success
+// 	case On:
+// 		return true, errno.Success
+// 	case Breakdown:
+// 		return false, errno.TurnOffBreakdownPileErr
+// 	case Charging:
+// 		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
+// 		// 此处暂时作为 充电中不能关机处理
+// 		return false, errno.TurnOffChargingPileErr
+// 	default:
+// 		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
+// 	}
+// }
 
 func NewPile(pileId int, maxWaitingNum int, pileType int, power int, status PileStatus) *Pile {
 	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, list.New()}
