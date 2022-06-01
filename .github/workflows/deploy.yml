@@ -36,6 +36,6 @@ jobs:
             git pull
             go env -w GOPROXY=https://goproxy.cn,direct
             go mod tidy
-            docker-compose up & 
+            docker-compose down && docker-compose up & 
             /usr/local/go/bin/go build -o backend.out
             nohup ./backend.out >/tmp/test.out 2>&1 &
