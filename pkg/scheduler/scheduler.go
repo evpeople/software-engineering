@@ -12,6 +12,8 @@ const (
 	DefaultFastCharingPileNum     = 3
 	DefaultWaitingAreaSize        = 100
 	DefaultChargingQueueLen       = 3
+	DefaultFastPower              = 30
+	DefaultTricklePower           = 10
 )
 
 var s Scheduler
@@ -24,16 +26,16 @@ func Init() {
 	s.number = 0
 	//todo: init by reading config text
 	//fastCharingPile
-	s.fastCharingPile = make([]*list.List, s.fastCharingPileNum)
+	s.fastCharingPile = make([]*Pile, s.fastCharingPileNum)
 
 	for i := 0; i < s.fastCharingPileNum; i++ {
-		s.fastCharingPile[i] = list.New()
+		s.fastCharingPile[i] = NewPile(i, s.chargingQueueLen, ChargingType_Fast, DefaultFastPower, On)
 	}
 	//trickleChargingPile
-	s.trickleChargingPile = make([]*list.List, s.trickleChargingPileNum)
+	s.trickleChargingPile = make([]*Pile, s.trickleChargingPileNum)
 
 	for i := 0; i < s.trickleChargingPileNum; i++ {
-		s.trickleChargingPile[i] = list.New()
+		s.trickleChargingPile[i] = NewPile(i, s.chargingQueueLen, ChargingType_Trickle, DefaultTricklePower, On)
 	}
 	s.waitingArea = list.New()
 }
@@ -44,8 +46,8 @@ type Scheduler struct {
 	fastCharingPileNum     int
 	waitingAreaSize        int
 	chargingQueueLen       int
-	trickleChargingPile    []*list.List
-	fastCharingPile        []*list.List
+	trickleChargingPile    []*Pile
+	fastCharingPile        []*Pile
 	waitingArea            *list.List
 }
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/gin-gonic/gin"
@@ -48,10 +49,10 @@ func Stop(c *gin.Context) {
 
 	// bill_id, bill_gen_time, pipe_id, start_time, charge_type 在开始充电时就填写好了
 
-	bill.EndTime = time.Now().Format(TimeLayoutStr) // end_time
+	bill.EndTime = time.Now().Format(constants.TimeLayoutStr) // end_time
 
 	loc, _ := time.LoadLocation("Local")
-	start_time, _ := time.ParseInLocation(TimeLayoutStr, bill.StartTime, loc)
+	start_time, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
 	duration := time.Since(start_time) // 充电持续时间
 
 	bill.ChargeTime = duration.String() // charging_time 默认为ns

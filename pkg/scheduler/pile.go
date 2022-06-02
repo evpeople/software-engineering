@@ -1,0 +1,83 @@
+package scheduler
+
+import (
+	"container/list"
+)
+
+// 充电桩状态的枚举类型
+type PileStatus int
+
+const (
+	On        PileStatus = iota + 1 // EnumIndex = 1，充电桩开启
+	Off                             // EnumIndex = 2，充电桩关闭
+	Charging                        // EnumIndex = 3，充电桩正在充电
+	Breakdown                       // EnumIndex = 4，充电桩故障
+)
+
+// 返回充电桩状态对应的字符串
+func (status PileStatus) String() string {
+	return [...]string{"On", "Off", "Charging", "Breakdown"}[status-1]
+}
+
+// 返回充电桩状态对应索引值
+func (status PileStatus) EnumIndex() int {
+	return int(status)
+}
+
+type Pile struct {
+	PileId              int
+	MaxWaitingNum       int
+	Type                int
+	Power               int
+	Status              PileStatus
+	ChargeTotalCnt      int
+	ChargeTotalQuantity float64
+	CarsCharging        *list.List
+
+	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
+}
+
+// // 判断当前充电桩的队列是否满
+// func (p *Pile) isFull() bool {
+// 	return p.CarsCharging.Len() >= p.MaxWaitingNum
+// }
+
+// func (p *Pile) close() (bool, errno.ErrNo) {
+// 	switch p.Status {
+// 	case Off:
+// 		return true, errno.Success
+// 	case On:
+// 		p.Status = Off
+// 		return true, errno.Success
+// 	case Breakdown:
+// 		return false, errno.TurnOffBreakdownPileErr
+// 	case Charging:
+// 		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
+// 		// 此处暂时作为 充电中不能关机处理
+// 		return false, errno.TurnOffChargingPileErr
+// 	default:
+// 		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
+// 	}
+// }
+
+// func (p *Pile) open() (bool, errno.ErrNo) {
+// 	switch p.Status {
+// 	case Off:
+// 		p.Status = On
+// 		return true, errno.Success
+// 	case On:
+// 		return true, errno.Success
+// 	case Breakdown:
+// 		return false, errno.TurnOffBreakdownPileErr
+// 	case Charging:
+// 		// ? 需要考虑，充电中能否强制关机？能的话，需要添加后续处理；不能的话，需要返回错误信息
+// 		// 此处暂时作为 充电中不能关机处理
+// 		return false, errno.TurnOffChargingPileErr
+// 	default:
+// 		return true, errno.Success // 默认 Status 字段未初始化时，充电桩处于关闭状态
+// 	}
+// }
+
+func NewPile(pileId int, maxWaitingNum int, pileType int, power int, status PileStatus) *Pile {
+	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, list.New()}
+}
