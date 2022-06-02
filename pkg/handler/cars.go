@@ -5,14 +5,11 @@ import (
 	"strconv"
 	"time"
 
-	// "time"
-
+	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
-
-const TimeLayoutStr = "2006-01-02 15:04:05"
 
 func Cars(c *gin.Context) {
 	var carsInfoVar CarsInfo
@@ -23,9 +20,9 @@ func Cars(c *gin.Context) {
 	carsInfoVar.CarCapacity, _ = strconv.Atoi(c.Query("car_capacity"))
 	carsInfoVar.RequestedQuantity, _ = strconv.Atoi(c.Query("charging_quantity"))
 
-	StartWaitingTime := c.Query("start_waiting_time")                    //todo: waiting define of 'start waiting time'
-	loc, _ := time.LoadLocation("Local")                                 //获取本地时区
-	t, err := time.ParseInLocation(TimeLayoutStr, StartWaitingTime, loc) //使用模板在对应时区转化为time.time类型
+	StartWaitingTime := c.Query("start_waiting_time")                              //todo: waiting define of 'start waiting time'
+	loc, _ := time.LoadLocation("Local")                                           //获取本地时区
+	t, err := time.ParseInLocation(constants.TimeLayoutStr, StartWaitingTime, loc) //使用模板在对应时区转化为time.time类型
 	if err != nil {
 		logrus.Debug("start waiting time parse unsuccessful")
 		sendRegisterResponse(c, errno.ConvertErr(err), nil)
