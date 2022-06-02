@@ -77,14 +77,14 @@ func Stop(c *gin.Context) {
 
 func CalChargeFee(start string, end string, quantity float64) float64 {
 	// 根据开始充电和结束充电时间，区间计费
-	// loc, _ := time.LoadLocation("Local")
-	// start_time, _ := time.ParseInLocation(TimeLayoutStr, start, loc) // time.Time格式
-	// end_time, _ := time.ParseInLocation(TimeLayoutStr, end, loc)
-	// if start_time.Day() != end_time.Day() || start_time.Month() != end_time.Month() { // 跨天充电
+	loc, _ := time.LoadLocation("Local")
+	start_time, _ := time.ParseInLocation(TimeLayoutStr, start, loc) // time.Time格式
+	end_time, _ := time.ParseInLocation(TimeLayoutStr, end, loc)
+	if start_time.Day() != end_time.Day() || start_time.Month() != end_time.Month() { // 跨天充电
 
-	// } else {
+	} else {
 
-	// }
+	}
 	// todo: Calculate Function
 	return 22.3 // 元
 }
