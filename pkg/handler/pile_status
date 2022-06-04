@@ -1,0 +1,53 @@
+package handler
+
+import (
+	"context"
+	"net/http"
+	"strconv"
+
+	"github.com/evpeople/softEngineer/pkg/dal/db"
+	"github.com/evpeople/softEngineer/pkg/errno"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+)
+
+type PileResp struct {
+	StatusCode int        `json:"status_code"`
+	StatusMsg  string     `json:"status_msg"`
+	PileStatus []PileInfo `json:"pile_status"`
+}
+
+func GetPileStatusFromCarID(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logrus.Debug(err)
+		sendCarResponse(c, errno.ConvertErr(err), nil)
+	}
+	car, err := db.GetCarFromCarID(context.Background(), int64(id))
+	if err != nil {
+		logrus.Debug("Get Car  wrong", err.Error())
+		sendCarResponse(c, errno.ConvertErr(err), nil)
+	}
+	sendCarResponse(c, nil, &CarResp{car.UserRefer, car.BatteryCap, int(car.ID)})
+}
+
+func sendPileResponse(c *gin.Context, err error, data *PileResp) {
+	Err := errno.ConvertErr(err)
+	if data == nil {
+		c.JSON(http.StatusOK, PileResponse{
+			StautsCode: Err.ErrCode,
+			StatusMsg:  Err.ErrMsg,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, PileResponse{
+		StatusMsg:  Err.ErrMsg,
+		StatusCode: Err.ErrCode,
+		Pile: []PileInfo{{
+			IsWork:                data.IsWork,
+			ChargingTotalCount:    data.ChargingTotalCount,
+			ChargingTotalTime:     data.ChargingTotalTime,
+			ChargingTotalQuantity: data.ChargingTotalQuantity,
+		}},
+	})
+}
