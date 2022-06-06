@@ -11,38 +11,53 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//查看所有充电桩状态
 type PileResp struct {
 	StatusCode int        `json:"status_code"`
 	StatusMsg  string     `json:"status_msg"`
-	PileStatus []PileInfo `json:"pile_status"`
+	Pile       []PileInfo `json:"pile"`
 }
 
-func GetPileStatusFromCarID(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		logrus.Debug(err)
-		sendCarResponse(c, errno.ConvertErr(err), nil)
+func GetPileStatus(c *gin.Context) {
+	var token String
+
+	if err := c.ShouldBind(&token); err != nil {
+		logrus.Debug("not bind")
+		sendPileResponse(c, errno.ConvertErr(err), nil)
+		return
 	}
-	car, err := db.GetCarFromCarID(context.Background(), int64(id))
-	if err != nil {
-		logrus.Debug("Get Car  wrong", err.Error())
-		sendCarResponse(c, errno.ConvertErr(err), nil)
+
+	pileIDList := getPileIDList()
+	var PileStatusVar []PileInfo
+	for i, curID := range pileIDList {
+		status, err := db.MGetPileID(context.Background(), int64(curID))
+		if err != nil {
+			logrus.Debug("**Get pile status failed", err.Error())
+			sendPileResponse(c, errno.ConvertErr(err), nil)
+		}
+		PileStatusVar[i].PileID = status.PileID
+		PileStatusVar[i].IsWork = status.IsWork
+		PileStatusVar[i].ChargingTotalCount = status.ChargingTotalCount
+		PileStatusVar[i].ChargingTotalTime = status.ChargingTotalTime
+		PileStatusVar[i].ChargingTotalQuantity = status.ChargingTotalQuantity
 	}
-	sendCarResponse(c, nil, &CarResp{car.UserRefer, car.BatteryCap, int(car.ID)})
+
+	sendPileResponse(c, errno.Success, &PileStatusVar)
 }
 
-func sendPileResponse(c *gin.Context, err error, data *PileResp) {
+func sendPileResponse(c *gin.Context, err error, data *StatusVar) {
 	Err := errno.ConvertErr(err)
 	if data == nil {
-		c.JSON(http.StatusOK, PileResponse{
+		c.JSON(http.StatusOK, PileResp{
 			StautsCode: Err.ErrCode,
 			StatusMsg:  Err.ErrMsg,
 		})
 		return
 	}
-	c.JSON(http.StatusOK, PileResponse{
+	c.JSON(http.StatusOK, PileResp{
+		StautsCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,
-		StatusCode: Err.ErrCode,
+		//todo
 		Pile: []PileInfo{{
 			IsWork:                data.IsWork,
 			ChargingTotalCount:    data.ChargingTotalCount,
@@ -50,4 +65,10 @@ func sendPileResponse(c *gin.Context, err error, data *PileResp) {
 			ChargingTotalQuantity: data.ChargingTotalQuantity,
 		}},
 	})
+}
+
+func getPileIDList() {
+	var pileIDList []int
+	//todo
+	return pileIDList
 }

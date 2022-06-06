@@ -32,3 +32,7 @@ func MGetPileID(ctx context.Context, pileID int64) (*PileInfo, error) {
 func CreatePile(ctx context.Context, piles []*PileInfo) error {
 	return DB.WithContext(ctx).Create(piles).Error
 }
+
+func UpdatePile(ctx context.Context, a_pile *PileInfo) error {
+	return DB.WithContext(ctx).Updates(a_pile).Error
+}
