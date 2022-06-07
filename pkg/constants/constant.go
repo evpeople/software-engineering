@@ -5,6 +5,7 @@ const (
 	UserTableName   = "user"
 	CarsTableName   = "cars"
 	BillTableName   = "bills"
+	PileTableName	= "piles"
 	SecretKey       = "secret key"
 	TimeLayoutStr   = "2006-01-02 15:04:05"
 )

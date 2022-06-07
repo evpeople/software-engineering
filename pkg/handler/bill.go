@@ -26,7 +26,7 @@ func GetBill(c *gin.Context) {
 	var billInfoVar BillInfo
 	billInfoVar.BillId = bill.BillId
 	billInfoVar.BillGenTime = bill.BillGenTime
-	billInfoVar.PipeId = bill.PipeId
+	billInfoVar.PileId = bill.PileId
 	billInfoVar.ChargeQuantity = bill.ChargeQuantity
 	billInfoVar.ChargeType = bill.ChargeType
 	billInfoVar.ChargeTime = bill.ChargeTime
@@ -42,7 +42,7 @@ func GetBill(c *gin.Context) {
 type BillInfo struct {
 	BillId         int     `json:"bill_id" gorm:"unique"`
 	BillGenTime    string  `json:"bill_generate_time"`
-	PipeId         int     `json:"pipe_id"`
+	PileId         int     `json:"pile_id"`
 	ChargeQuantity float64 `json:"charging_quantity"`
 	ChargeType     int     `json:"charging_type"`
 	ChargeTime     string  `json:"charging_time"`
@@ -74,7 +74,7 @@ func sendBillResponse(c *gin.Context, err error, data *BillInfo) {
 		Bill: []BillInfo{{
 			BillId:         data.BillId,
 			BillGenTime:    data.BillGenTime,
-			PipeId:         data.PipeId,
+			PileId:         data.PileId,
 			ChargeQuantity: data.ChargeQuantity,
 			ChargeType:     data.ChargeType,
 			ChargeTime:     data.ChargeTime,

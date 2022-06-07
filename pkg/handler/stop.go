@@ -47,7 +47,7 @@ func Stop(c *gin.Context) {
 	bill_id, _ := strconv.ParseInt(params.BillId, 10, 64)
 	bill, _ := db.GetBillFromBillId(context.Background(), bill_id)
 
-	// bill_id, bill_gen_time, pipe_id, start_time, charge_type 在开始充电时就填写好了
+	// bill_id, bill_gen_time, pile_id, start_time, charge_type 在开始充电时就填写好了
 
 	bill.EndTime = time.Now().Format(constants.TimeLayoutStr) // end_time
 
