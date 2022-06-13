@@ -24,23 +24,26 @@ func Charge(c *gin.Context) {
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
-	num := scheduler.WhenCarComing(userId, params.CarId, params.ChargingType, params.ChargingQuantity)
-	sendChargingResponse(c, errno.Success, chargingRespData{num > 0, num})
+	queueId, num := scheduler.WhenCarComing(userId, params.CarId, params.ChargingType, params.ChargingQuantity)
+	sendChargingResponse(c, errno.Success, chargingRespData{queueId > 0, queueId, num})
 }
 
 type ChargingResponse struct {
-	Resp       bool   `json:"resp"`
+	Resp bool `json:"resp"`
 
-	Num        int    `json:"num"`
+	QueueId int64 `json:"queue_id"`
 
-	StatusCode int    `json:"status_code"`
+	Num int `json:"num"`
 
-	StatusMsg  string `json:"status_msg"`
+	StatusCode int `json:"status_code"`
+
+	StatusMsg string `json:"status_msg"`
 }
 
 type chargingRespData struct {
-	Resp bool
-	Num  int
+	Resp    bool
+	QueueId int64
+	Num     int
 }
 
 func sendChargingResponse(c *gin.Context, err error, data chargingRespData) {
@@ -49,6 +52,7 @@ func sendChargingResponse(c *gin.Context, err error, data chargingRespData) {
 		StatusCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,
 		Resp:       data.Resp,
+		QueueId:    data.QueueId,
 		Num:        data.Num,
 	})
 }
