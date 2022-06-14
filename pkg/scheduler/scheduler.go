@@ -17,6 +17,7 @@ const (
 )
 
 var s Scheduler
+var nextQueueId int64 =1//queue id for the next coming car
 
 func Init() {
 	s.trickleChargingPileNum = DefaultTrickleChargingPileNum
@@ -57,13 +58,14 @@ func (s *Scheduler) isFull() bool {
 }
 
 //whenCarComing trys to put the car in the queue, if the queue is full return false else return true
-func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity int) int {
+func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity int) (int64,int) {
 	if s.isFull() {
-		return -1 //queue if full
+		return 0,0 //queue if full
 	} else {
-		s.waitingArea.PushBack(NewCar(userId, carId, chargingType, chargingQuantity))
+		s.waitingArea.PushBack(NewCar(userId, carId,nextQueueId, chargingType, chargingQuantity))
+		nextQueueId++
 		s.number++
-		return s.number
+		return nextQueueId-1,s.number
 	}
 
 }
