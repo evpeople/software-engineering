@@ -28,13 +28,7 @@ func Report(c *gin.Context) {
 		reportsInfoVar[i].PileChargingTotalCount = pile.ChargingTotalCount
 		reportsInfoVar[i].PileChargingTotalTime = pile.ChargingTotalTime
 		reportsInfoVar[i].PileChargingTotalQuantity = pile.ChargingTotalQuantity
-		reportsInfoVar[i].PileChargingTotalFee, err = db.GetChargingTotalFeeFromPileId(context.Background(), int64(pile.PileID))
-		if err != nil {
-			logrus.Debug(err.Error())
-			SendReportsResponse(c, errno.ConvertErr(err), nil)
-		}
-
-		reportsInfoVar[i].PileServiceTotalFee, err = db.GetServiceTotalFeeFromPileId(context.Background(), int64(pile.PileID))
+		reportsInfoVar[i].PileChargingTotalFee, reportsInfoVar[i].PileServiceTotalFee, err = db.GetChgSevTotalFeeFromPileId(context.Background(), int64(pile.PileID))
 		if err != nil {
 			logrus.Debug(err.Error())
 			SendReportsResponse(c, errno.ConvertErr(err), nil)

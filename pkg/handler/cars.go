@@ -32,6 +32,11 @@ func GetCarsInfo(c *gin.Context) {
 	var carsInfoVar []CarInfo
 	var car *scheduler.Car
 
+	//! test code
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
+
 	if len := pile.ChargeArea.Len(); len <= 1 {
 		// 队列中没有车或者只有一辆车在充电，没有等待车辆
 		logrus.Debug(errno.NoWaitingCar.Error())
@@ -48,15 +53,20 @@ func GetCarsInfo(c *gin.Context) {
 			logrus.Debug(err.Error())
 			sendCarResponse(c, errno.ConvertErr(err), nil)
 		}
+		logrus.Debug("bill id: " + strconv.Itoa(bill.BillId))
 		loc, _ := time.LoadLocation("Local")
 		startTime, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
+		logrus.Debug("startTime: " + startTime.Format(constants.TimeLayoutStr))
 		totalTime, err := time.ParseDuration(strconv.FormatFloat(float64(car.GetChargingQuantity())/float64(pile.Power), 'f', 4, 64) + "h")
+		logrus.Debug("totalTime: " + totalTime.String())
 		if err != nil {
 			logrus.Debug(err.Error())
 			sendCarResponse(c, errno.ConvertErr(err), nil)
 		}
 		endTime := startTime.Add(totalTime)
+		logrus.Debug("endTime: " + endTime.Format(constants.TimeLayoutStr))
 		remainTime := time.Until(endTime)
+		logrus.Debug("remainTime: " + remainTime.String())
 
 		// 获取所有车辆的信息
 		n := 0
