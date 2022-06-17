@@ -38,10 +38,10 @@ type Pile struct {
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
-// 判断当前充电桩的队列是否满
-func (p *Pile) isFull() bool {
-	return p.ChargeArea.Len() >= p.MaxWaitingNum
-}
+// // 判断当前充电桩的队列是否满
+// func (p *Pile) isFull() bool {
+// 	return p.ChargeArea.Len() >= p.MaxWaitingNum
+// }
 
 // func (p *Pile) close() (bool, errno.ErrNo) {
 // 	switch p.Status {
