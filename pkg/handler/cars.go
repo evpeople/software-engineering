@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -32,24 +33,39 @@ func GetCarsInfo(c *gin.Context) {
 	var car *scheduler.Car
 
 	if len := pile.ChargeArea.Len(); len <= 1 {
-		// 队列中只有一辆车在充电或者没有车，没有等待车辆
-		logrus.Debug("No waiting cars.")
-		sendCarResponse(c, errno.Success, nil)
+		// 队列中没有车或者只有一辆车在充电，没有等待车辆
+		logrus.Debug(errno.NoWaitingCar.Error())
+		sendCarResponse(c, errno.NoWaitingCar, nil)
 		return
 	} else {
 		// 有等待车辆，返回所有等待车辆的信息
 		carsInfoVar = make([]CarInfo, len-1)
+
 		// 计算当前正在充电的车，充完电所需的时间
 		car = pile.ChargeArea.Front().Value.(*scheduler.Car)
-		waitingHours := float32(car.GetChargingQuantity()) / pile.Power
+		bill, err := db.GetChargingBillFromPileId(context.Background(), int64(pileId))
+		if err != nil {
+			logrus.Debug(err.Error())
+			sendCarResponse(c, errno.ConvertErr(err), nil)
+		}
+		loc, _ := time.LoadLocation("Local")
+		startTime, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
+		totalTime, err := time.ParseDuration(strconv.FormatFloat(float64(car.GetChargingQuantity())/float64(pile.Power), 'f', 4, 64) + "h")
+		if err != nil {
+			logrus.Debug(err.Error())
+			sendCarResponse(c, errno.ConvertErr(err), nil)
+		}
+		endTime := startTime.Add(totalTime)
+		remainTime := time.Until(endTime)
 
+		// 获取所有车辆的信息
 		n := 0
 		for i := pile.ChargeArea.Front().Next(); i != nil; i = i.Next() {
 			car = i.Value.(*scheduler.Car)
 			carsInfoVar[n].UserID = car.GetUserId()
 			carsInfoVar[n].CarID = car.GetCarId()
-			carsInfoVar[n].RequestedQuantity = car.GetChargingQuantity()
-			// carsInfoVar[i].WaitingTime =
+			carsInfoVar[n].RequestedQuantity = float64(car.GetChargingQuantity())
+			carsInfoVar[n].WaitingTime = remainTime.String()
 
 			dbCar, err := db.GetCarFromCarID(c, carsInfoVar[n].CarID)
 			if err != nil {
@@ -57,37 +73,28 @@ func GetCarsInfo(c *gin.Context) {
 				SendCarsResponse(c, errno.ConvertErr(err), nil)
 				return
 			}
-			carsInfoVar[n].CarCapacity = dbCar.BatteryCap
+			carsInfoVar[n].CarCapacity = float64(dbCar.BatteryCap)
+
+			// 更新 remain time
+			newRemain := float64(car.GetChargingQuantity())/float64(pile.Power) + remainTime.Hours()
+			remainTime, err = time.ParseDuration(strconv.FormatFloat(newRemain, 'f', 4, 64) + "h")
+			if err != nil {
+				logrus.Debug(err.Error())
+				sendCarResponse(c, errno.ConvertErr(err), nil)
+			}
+
 			n++
 		}
-
-		// carsInfoVar.UserID = GetIdFromRequest(c)
-
-		// carsInfoVar.CarID = 4 //todo: add function to get car id
-		// carsInfoVar.CarCapacity, _ = strconv.Atoi(c.Query("car_capacity"))
-		// carsInfoVar.RequestedQuantity, _ = strconv.Atoi(c.Query("charging_quantity"))
-
-		StartWaitingTime := c.Query("start_waiting_time")                              //todo: waiting define of 'start waiting time'
-		loc, _ := time.LoadLocation("Local")                                           //获取本地时区
-		t, err := time.ParseInLocation(constants.TimeLayoutStr, StartWaitingTime, loc) //使用模板在对应时区转化为time.time类型
-		if err != nil {
-			logrus.Debug("start waiting time parse unsuccessful")
-			SendCarsResponse(c, errno.ConvertErr(err), nil)
-			return
-		}
-		// carsInfoVar.WaitingTime = time.Since(t).String()
-
 		SendCarsResponse(c, errno.Success, carsInfoVar)
-
 	}
 }
 
 type CarInfo struct {
-	UserID            int64  `json:"user_id"`
-	CarID             int64  `json:"car_id"`
-	CarCapacity       int    `json:"car_capacity"`
-	RequestedQuantity int    `json:"requested_quantity"`
-	WaitingTime       string `json:"waiting_time"`
+	UserID            int64   `json:"user_id"`
+	CarID             int64   `json:"car_id"`
+	CarCapacity       float64 `json:"car_capacity"`
+	RequestedQuantity float64 `json:"requested_quantity"`
+	WaitingTime       string  `json:"waiting_time"`
 }
 
 type CarsResp struct {

@@ -29,6 +29,14 @@ func MGetPileID(ctx context.Context, pileID int64) (*PileInfo, error) {
 	return res, nil
 }
 
+func MGetAllPiles(ctx context.Context) ([]*PileInfo, error) {
+	res := make([]*PileInfo, 0)
+	if err := DB.WithContext(ctx).Find(&res).Error; err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func CreatePile(ctx context.Context, piles []*PileInfo) error {
 	return DB.WithContext(ctx).Create(piles).Error
 }

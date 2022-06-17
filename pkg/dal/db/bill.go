@@ -42,6 +42,38 @@ func GetBillFromId(ctx context.Context, ID int64) (*Bill, error) {
 	return res, nil
 }
 
+func GetChargingBillFromPileId(ctx context.Context, pileId int64) (*Bill, error) {
+	res := new(Bill)
+	if err := DB.WithContext(ctx).Where("pile_id = ? and end_time = \"\" and start_time <> \"\"", pileId).Find(&res).Error; err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func GetChargingTotalFeeFromPileId(ctx context.Context, pileId int64) (float64, error) {
+	var res []float64
+	var sum float64 = 0
+	if err := DB.WithContext(ctx).Select("charging_fee").Where("pile_id = ? and charging_fee <> 0").Find(&res).Error; err != nil {
+		return -1, err
+	}
+	for i := 0; i < len(res); i++ {
+		sum += res[i]
+	}
+	return sum, nil
+}
+
+func GetServiceTotalFeeFromPileId(ctx context.Context, pileId int64) (float64, error) {
+	var res []float64
+	var sum float64 = 0
+	if err := DB.WithContext(ctx).Select("service_fee").Where("pile_id = ? and service_fee <> 0").Find(&res).Error; err != nil {
+		return -1, err
+	}
+	for i := 0; i < len(res); i++ {
+		sum += res[i]
+	}
+	return sum, nil
+}
+
 func UpdateBill(ctx context.Context, a_bill *Bill) error {
 	return DB.WithContext(ctx).Updates(a_bill).Error
 }
