@@ -1,0 +1,74 @@
+package handler
+
+import (
+	"context"
+	"net/http"
+	"strconv"
+
+	"github.com/evpeople/softEngineer/pkg/dal/db"
+	"github.com/evpeople/softEngineer/pkg/errno"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+)
+
+//查看所有充电桩状态
+type PileResp struct {
+	StatusCode int        `json:"status_code"`
+	StatusMsg  string     `json:"status_msg"`
+	Pile       []PileInfo `json:"pile"`
+}
+
+func GetPileStatus(c *gin.Context) {
+	var token String
+
+	if err := c.ShouldBind(&token); err != nil {
+		logrus.Debug("not bind")
+		sendPileResponse(c, errno.ConvertErr(err), nil)
+		return
+	}
+
+	pileIDList := getPileIDList()
+	var PileStatusVar []PileInfo
+	for i, curID := range pileIDList {
+		status, err := db.MGetPileID(context.Background(), int64(curID))
+		if err != nil {
+			logrus.Debug("**Get pile status failed", err.Error())
+			sendPileResponse(c, errno.ConvertErr(err), nil)
+		}
+		PileStatusVar[i].PileID = status.PileID
+		PileStatusVar[i].IsWork = status.IsWork
+		PileStatusVar[i].ChargingTotalCount = status.ChargingTotalCount
+		PileStatusVar[i].ChargingTotalTime = status.ChargingTotalTime
+		PileStatusVar[i].ChargingTotalQuantity = status.ChargingTotalQuantity
+	}
+
+	sendPileResponse(c, errno.Success, &PileStatusVar)
+}
+
+func sendPileResponse(c *gin.Context, err error, data *StatusVar) {
+	Err := errno.ConvertErr(err)
+	if data == nil {
+		c.JSON(http.StatusOK, PileResp{
+			StautsCode: Err.ErrCode,
+			StatusMsg:  Err.ErrMsg,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, PileResp{
+		StautsCode: Err.ErrCode,
+		StatusMsg:  Err.ErrMsg,
+		//todo
+		Pile: []PileInfo{{
+			IsWork:                data.IsWork,
+			ChargingTotalCount:    data.ChargingTotalCount,
+			ChargingTotalTime:     data.ChargingTotalTime,
+			ChargingTotalQuantity: data.ChargingTotalQuantity,
+		}},
+	})
+}
+
+func getPileIDList() {
+	var pileIDList []int
+	//todo
+	return pileIDList
+}

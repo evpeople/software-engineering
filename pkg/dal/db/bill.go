@@ -11,7 +11,7 @@ type Bill struct {
 	gorm.Model
 	BillId         int     `json:"bill_id" gorm:"unique"`
 	BillGenTime    string  `json:"bill_generate_time"`
-	PipeId         int     `json:"pipe_id"`
+	PileId         int     `json:"pile_id"`
 	ChargeQuantity float64 `json:"charging_quantity"`
 	ChargeType     int     `json:"charging_type"`
 	ChargeTime     string  `json:"charging_time"`
