@@ -38,4 +38,6 @@ jobs:
             go mod tidy
             
             /usr/local/go/bin/go build -o backend.out
+            docker-compose up &
+            sleep 1
             nohup ./backend.out >/tmp/test.out 2>&1 &
