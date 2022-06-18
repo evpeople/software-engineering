@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"container/list"
+	// "github.com/evpeople/softEngineer/pkg/errno"
 )
 
 // 充电桩状态的枚举类型
@@ -28,18 +29,18 @@ type Pile struct {
 	PileId              int
 	MaxWaitingNum       int
 	Type                int
-	Power               int
+	Power               float32
 	Status              PileStatus
 	ChargeTotalCnt      int
 	ChargeTotalQuantity float64
-	CarsCharging        *list.List
+	ChargeArea          *list.List
 
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
 // // 判断当前充电桩的队列是否满
 // func (p *Pile) isFull() bool {
-// 	return p.CarsCharging.Len() >= p.MaxWaitingNum
+// 	return p.ChargeArea.Len() >= p.MaxWaitingNum
 // }
 
 // func (p *Pile) close() (bool, errno.ErrNo) {
@@ -78,6 +79,25 @@ type Pile struct {
 // 	}
 // }
 
-func NewPile(pileId int, maxWaitingNum int, pileType int, power int, status PileStatus) *Pile {
+func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus) *Pile {
 	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, list.New()}
+}
+
+func GetPileById(pileId int) *Pile {
+	var p *Pile
+	// 遍历慢充桩
+	for i := s.trickleChargingPile.Front(); i != nil; i = i.Next() {
+		p = i.Value.(*Pile)
+		if p.PileId == pileId {
+			return p
+		}
+	}
+	// 遍历快充桩
+	for i := s.fastCharingPile.Front(); i != nil; i = i.Next() {
+		p = i.Value.(*Pile)
+		if p.PileId == pileId {
+			return p
+		}
+	}
+	return nil
 }
