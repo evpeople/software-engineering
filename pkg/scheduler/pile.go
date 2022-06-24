@@ -28,7 +28,8 @@ func (status PileStatus) EnumIndex() int {
 type Pile struct {
 	PileId              int
 	MaxWaitingNum       int
-	Type                int
+	Type                int64
+	PileTag             int64
 	Power               float32
 	Status              PileStatus
 	ChargeTotalCnt      int
@@ -79,23 +80,25 @@ type Pile struct {
 // 	}
 // }
 
-func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus) *Pile {
-	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, list.New()}
+func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power float32, status PileStatus) *Pile {
+	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0, list.New()}
 }
 
-func GetPileById(pileId int) *Pile {
+func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {
 	var p *Pile
-	// 遍历慢充桩
-	for i := s.trickleChargingPile.Front(); i != nil; i = i.Next() {
-		p = i.Value.(*Pile)
-		if p.PileId == pileId {
-			return p
-		}
+	var piles *list.List
+
+	if pileType == ChargingType_Fast {
+		piles = s.fastCharingPile
+	} else if pileType == ChargingType_Trickle {
+		piles = s.trickleChargingPile
+	} else {
+		return nil
 	}
-	// 遍历快充桩
-	for i := s.fastCharingPile.Front(); i != nil; i = i.Next() {
+
+	for i := piles.Front(); i != nil; i = i.Next() {
 		p = i.Value.(*Pile)
-		if p.PileId == pileId {
+		if p.PileTag == pileTag {
 			return p
 		}
 	}

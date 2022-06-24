@@ -15,14 +15,21 @@ import (
 )
 
 func GetCarsInfo(c *gin.Context) {
-	pileId, err := strconv.Atoi(c.Query("pile_id"))
+	pileType, err := strconv.Atoi(c.Query("pile_type"))
 	if err != nil {
 		logrus.Debug(err)
 		SendCarsResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
 
-	pile := scheduler.GetPileById(pileId)
+	pileTag, err := strconv.Atoi(c.Query("pile_tag"))
+	if err != nil {
+		logrus.Debug(err)
+		SendCarsResponse(c, errno.ConvertErr(err), nil)
+		return
+	}
+
+	pile := scheduler.GetPileByTypeTag(int64(pileType), int64(pileTag))
 	if pile == nil {
 		logrus.Debug(errno.PileNotExistErr.Error())
 		SendCarsResponse(c, errno.PileNotExistErr, nil)
@@ -32,23 +39,28 @@ func GetCarsInfo(c *gin.Context) {
 	var carsInfoVar []CarInfo
 	var car *scheduler.Car
 
-	// //! test code
-	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
-	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
-	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
+	//! test code
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
+	pile.ChargeArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
 
-	if len := pile.ChargeArea.Len(); len <= 1 {
-		// 队列中没有车或者只有一辆车在充电，没有等待车辆
+	if len := pile.ChargeArea.Len(); len == 0 {
+		// 队列中没有车
 		logrus.Debug(errno.NoWaitingCar.Error())
 		SendCarsResponse(c, errno.NoWaitingCar, nil)
 		return
 	} else {
-		// 有等待车辆，返回所有等待车辆的信息
-		carsInfoVar = make([]CarInfo, len-1)
+		// 队列中有车辆，返回所有车辆的信息
+		carsInfoVar = make([]CarInfo, len)
+
+		// 设置当前正在充电的车的返回信息
+		car = pile.ChargeArea.Front().Value.(*scheduler.Car)
+		carsInfoVar[0].UserID = car.GetUserId()
+		carsInfoVar[0].CarID = car.GetCarId()
+		carsInfoVar[0].RequestedQuantity = float64(car.GetChargingQuantity())
 
 		// 计算当前正在充电的车，充完电所需的时间
-		car = pile.ChargeArea.Front().Value.(*scheduler.Car)
-		bill, err := db.GetChargingBillFromPileId(context.Background(), int64(pileId))
+		bill, err := db.GetBillFromBillId(context.Background(), car.GetCarId()) // 由于测试数据中一个车只有一个订单，此处暂且这样写了。
 		if err != nil {
 			logrus.Debug(err.Error())
 			SendCarsResponse(c, errno.ConvertErr(err), nil)
@@ -69,15 +81,22 @@ func GetCarsInfo(c *gin.Context) {
 		logrus.Debug("endTime: " + endTime.Format(constants.TimeLayoutStr))
 		remainTime := time.Until(endTime)
 		logrus.Debug("remainTime: " + remainTime.String())
+		carsInfoVar[0].WaitingTime = remainTime.String()
 
-		// 获取所有车辆的信息
-		n := 0
+		// 计算当前正在充电的车，已经充的电量和费用
+		carsInfoVar[0].ChargedQuantity = remainTime.Hours() * float64(pile.Power)
+		carsInfoVar[0].CurrentFee = CalChargeFee(bill.StartTime, time.Now().Format(constants.TimeLayoutStr), carsInfoVar[0].ChargedQuantity)
+
+		// 获取后续等待车辆的信息
+		n := 1
 		for i := pile.ChargeArea.Front().Next(); i != nil; i = i.Next() {
 			car = i.Value.(*scheduler.Car)
 			carsInfoVar[n].UserID = car.GetUserId()
 			carsInfoVar[n].CarID = car.GetCarId()
 			carsInfoVar[n].RequestedQuantity = float64(car.GetChargingQuantity())
 			carsInfoVar[n].WaitingTime = remainTime.String()
+			carsInfoVar[n].ChargedQuantity = 0
+			carsInfoVar[n].CurrentFee = 0
 
 			dbCar, err := db.GetCarFromCarID(c, carsInfoVar[n].CarID)
 			if err != nil {
@@ -108,6 +127,8 @@ type CarInfo struct {
 	CarCapacity       float64 `json:"car_capacity"`
 	RequestedQuantity float64 `json:"requested_quantity"`
 	WaitingTime       string  `json:"waiting_time"`
+	ChargedQuantity   float64 `json:"charged_quantity"`
+	CurrentFee        float64 `json:"current_fee"`
 }
 
 type CarsResp struct {
