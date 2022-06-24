@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
@@ -15,22 +14,28 @@ import (
 type PileResp struct {
 	StatusCode int        `json:"status_code"`
 	StatusMsg  string     `json:"status_msg"`
-	Pile       []PileInfo `json:"pile"`
+	Pile       []PileRepo `json:"pile"`
+}
+
+type PileRepo struct {
+	PileID                int     `json:"pile_id"`
+	IsWork                bool    `json:"is_work"`
+	ChargingTotalCount    int     `json:"charging_total_count"`
+	ChargingTotalTime     string  `json:"charging_total_time"`
+	ChargingTotalQuantity float64 `json:"charging_total_quantity"`
 }
 
 func GetPileStatus(c *gin.Context) {
-	var token String
-
-	if err := c.ShouldBind(&token); err != nil {
-		logrus.Debug("not bind")
-		sendPileResponse(c, errno.ConvertErr(err), nil)
-		return
+	piles, err := db.MGetAllPiles(context.Background())
+	if err != nil {
+		logrus.Debug(err.Error())
+		SendReportsResponse(c, errno.ConvertErr(err), nil)
 	}
+	len := len(piles)
 
-	pileIDList := getPileIDList()
-	var PileStatusVar []PileInfo
-	for i, curID := range pileIDList {
-		status, err := db.MGetPileID(context.Background(), int64(curID))
+	PileStatusVar := make([]PileRepo, len)
+	for i := 0; i < len; i++ {
+		status := piles[i]
 		if err != nil {
 			logrus.Debug("**Get pile status failed", err.Error())
 			sendPileResponse(c, errno.ConvertErr(err), nil)
@@ -42,33 +47,21 @@ func GetPileStatus(c *gin.Context) {
 		PileStatusVar[i].ChargingTotalQuantity = status.ChargingTotalQuantity
 	}
 
-	sendPileResponse(c, errno.Success, &PileStatusVar)
+	sendPileResponse(c, errno.Success, PileStatusVar)
 }
 
-func sendPileResponse(c *gin.Context, err error, data *StatusVar) {
+func sendPileResponse(c *gin.Context, err error, data []PileRepo) {
 	Err := errno.ConvertErr(err)
 	if data == nil {
 		c.JSON(http.StatusOK, PileResp{
-			StautsCode: Err.ErrCode,
+			StatusCode: Err.ErrCode,
 			StatusMsg:  Err.ErrMsg,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, PileResp{
-		StautsCode: Err.ErrCode,
+		StatusCode: Err.ErrCode,
 		StatusMsg:  Err.ErrMsg,
-		//todo
-		Pile: []PileInfo{{
-			IsWork:                data.IsWork,
-			ChargingTotalCount:    data.ChargingTotalCount,
-			ChargingTotalTime:     data.ChargingTotalTime,
-			ChargingTotalQuantity: data.ChargingTotalQuantity,
-		}},
+		Pile:       data,
 	})
-}
-
-func getPileIDList() {
-	var pileIDList []int
-	//todo
-	return pileIDList
 }

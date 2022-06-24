@@ -15,6 +15,8 @@ const (
 	TurnOffBreakdownPileErrCode = 10006
 	TurnOffChargingPileErrCode  = 10007
 	TurnOnBreakdownPileErrCode  = 10008
+	PileNotExistErrCode         = 10009
+	NoWaitingCarCode            = 10010
 )
 
 type ErrNo struct {
@@ -45,6 +47,8 @@ var (
 	TurnOffBreakdownPileErr = NewErrNo(TurnOffBreakdownPileErrCode, "Can't turn off a broken-down charging pile")
 	TurnOffChargingPileErr  = NewErrNo(TurnOffChargingPileErrCode, "Can't turn off a charging pile")
 	TurnOnBreakdownPileErr  = NewErrNo(TurnOnBreakdownPileErrCode, "Can't turn on a broken-down charging pile")
+	PileNotExistErr         = NewErrNo(PileNotExistErrCode, "Pile does not exists.")
+	NoWaitingCar            = NewErrNo(NoWaitingCarCode, "No waiting cars in this pile.")
 )
 
 // ConvertErr convert error to Errno
