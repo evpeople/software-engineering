@@ -86,14 +86,14 @@ func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status 
 func GetPileById(pileId int) *Pile {
 	var p *Pile
 	// 遍历慢充桩
-	for i := s.trickleChargingPile.Front(); i != nil; i = i.Next() {
+	for i := S.trickleChargingPile.Front(); i != nil; i = i.Next() {
 		p = i.Value.(*Pile)
 		if p.PileId == pileId {
 			return p
 		}
 	}
 	// 遍历快充桩
-	for i := s.fastCharingPile.Front(); i != nil; i = i.Next() {
+	for i := S.fastCharingPile.Front(); i != nil; i = i.Next() {
 		p = i.Value.(*Pile)
 		if p.PileId == pileId {
 			return p
