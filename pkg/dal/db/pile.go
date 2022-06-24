@@ -10,6 +10,8 @@ import (
 type PileInfo struct {
 	gorm.Model
 	PileID                int     `json:"pile_id"`
+	PileType			  int     `json:"pile_type"`
+	PileTag				  int     `json:"pile_tag"`
 	IsWork                bool    `json:"is_work"`
 	ChargingTotalCount    int     `json:"charging_total_count"`
 	ChargingTotalTime     string  `json:"charging_total_time"`
@@ -23,7 +25,16 @@ func (u *PileInfo) TableName() string {
 func MGetPileID(ctx context.Context, pileID int64) (*PileInfo, error) {
 	// res := make([]*User, 0)
 	res := new(PileInfo)
-	if err := DB.WithContext(ctx).Where("id = ?", pileID).Find(&res).Error; err != nil {
+	if err := DB.WithContext(ctx).Where("pile_id = ?", pileID).Find(&res).Error; err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func MGetPileTag(ctx context.Context, pileTag int64) (*PileInfo, error) {
+	// res := make([]*User, 0)
+	res := new(PileInfo)
+	if err := DB.WithContext(ctx).Where("pile_tag = ?", pileTag).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

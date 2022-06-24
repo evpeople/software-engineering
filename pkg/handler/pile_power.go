@@ -22,20 +22,20 @@ func ResetPilePower(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		logrus.Debug(err)
-		sendPowerResponse(c, errno.ConvertErr(err), nil)
+		sendPowerResponse(c, errno.ConvertErr(err), false)
 		return
 	}
 	//找到对应充电桩
-	tarPile, err := db.MGetPileID(context.Background(), int64(id))
+	tarPile, err := db.MGetPileTag(context.Background(), int64(id))
 	if err != nil {
 		logrus.Debug("Get PileID wrong", err.Error())
-		sendPowerResponse(c, errno.ConvertErr(err), nil)
+		sendPowerResponse(c, errno.ConvertErr(err), false)
 	}
 	tarPile.IsWork = !tarPile.IsWork
-	err := db.UpdatePile(context.Background(), tarPile)
+	err = db.UpdatePile(context.Background(), tarPile)
 	if err != nil {
 		logrus.Debug("**update pile status failed")
-		SendPowerResponse(c, errno.ConvertErr(err), nil)
+		sendPowerResponse(c, errno.ConvertErr(err), false)
 	}
 	sendPowerResponse(c, errno.Success, tarPile.IsWork)
 }

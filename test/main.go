@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -17,11 +18,13 @@ type Event struct {
 	Num   int    `json:"Num"`
 }
 
+
 var URL string
 
 func main() {
 	// 打开json文件
 	URL = "http://122.9.146.200:8080/v1"
+
 	jsonFile, err := os.Open("data.json")
 
 	// 最好要处理以下错误

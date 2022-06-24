@@ -17,8 +17,14 @@ func Report(c *gin.Context) {
 	if err != nil {
 		logrus.Debug(err.Error())
 		SendReportsResponse(c, errno.ConvertErr(err), nil)
+		return
 	}
 	len := len(piles)
+	if len == 0 {
+		logrus.Debug(errno.PileNotExistErr.Error())
+		SendReportsResponse(c, errno.PileNotExistErr, nil)
+		return
+	}
 
 	reportsInfoVar := make([]ReportInfo, len)
 	for i := 0; i < len; i++ {
@@ -32,13 +38,13 @@ func Report(c *gin.Context) {
 		if err != nil {
 			logrus.Debug(err.Error())
 			SendReportsResponse(c, errno.ConvertErr(err), nil)
+			return
 		}
 
 		reportsInfoVar[i].PileTotalFee = reportsInfoVar[i].PileChargingTotalFee + reportsInfoVar[i].PileServiceTotalFee
 	}
 
 	SendReportsResponse(c, errno.Success, reportsInfoVar)
-
 }
 
 type ReportInfo struct {
@@ -61,9 +67,10 @@ type ReportsResp struct {
 func SendReportsResponse(c *gin.Context, err error, data []ReportInfo) {
 	Err := errno.ConvertErr(err)
 	if data == nil {
-		c.JSON(http.StatusOK, CarsResp{
+		c.JSON(http.StatusOK, ReportsResp{
 			StatusMsg:  Err.ErrMsg,
 			StatusCode: Err.ErrCode,
+			Reports:    []ReportInfo{},
 		})
 		return
 	}
