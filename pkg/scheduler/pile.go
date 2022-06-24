@@ -1,9 +1,5 @@
 package scheduler
 
-import (
-	"container/list"
-)
-
 // 充电桩状态的枚举类型
 type PileStatus int
 
@@ -32,8 +28,7 @@ type Pile struct {
 	Status              PileStatus
 	ChargeTotalCnt      int
 	ChargeTotalQuantity float64
-	CarsCharging        *list.List
-
+	Channel             chan Car
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
@@ -79,5 +74,14 @@ type Pile struct {
 // }
 
 func NewPile(pileId int, maxWaitingNum int, pileType int, power int, status PileStatus) *Pile {
-	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, list.New()}
+	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0, make(chan Car, maxWaitingNum)}
+}
+
+func (p *Pile) runPile() {
+	for {
+		var car Car
+		car :=  <-p.Channel
+
+	}
+
 }

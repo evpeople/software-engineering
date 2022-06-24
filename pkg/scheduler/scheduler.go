@@ -70,4 +70,9 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 
 }
 
+func queryFor(userId int64){
+	
+}
+
+
 //todo: other methods of Scheduler

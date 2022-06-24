@@ -59,6 +59,7 @@ func setupRouter() *gin.Engine {
 	charge.Use(handler.AuthMiddleware.MiddlewareFunc())
 	charge.POST("/come", handler.Charge)
 	charge.POST("/stop", handler.Stop)
+	charge.GET("/query", handler.Query)
 	charge.GET("/:id", handler.GetBill)
 
 	car := v1.Group("/car")
