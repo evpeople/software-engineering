@@ -25,14 +25,14 @@ func GetCarsInfo(c *gin.Context) {
 	pile := scheduler.GetPileById(pileId)
 	if pile == nil {
 		logrus.Debug(errno.PileNotExistErr.Error())
-		sendCarResponse(c, errno.PileNotExistErr, nil)
+		SendCarsResponse(c, errno.PileNotExistErr, nil)
 		return
 	}
 
 	var carsInfoVar []CarInfo
 	var car *scheduler.Car
 
-	// // test code
+	// //! test code
 	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
 	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
 	// pile.ChargeArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
@@ -40,7 +40,7 @@ func GetCarsInfo(c *gin.Context) {
 	if len := pile.ChargeArea.Len(); len <= 1 {
 		// 队列中没有车或者只有一辆车在充电，没有等待车辆
 		logrus.Debug(errno.NoWaitingCar.Error())
-		sendCarResponse(c, errno.NoWaitingCar, nil)
+		SendCarsResponse(c, errno.NoWaitingCar, nil)
 		return
 	} else {
 		// 有等待车辆，返回所有等待车辆的信息
@@ -51,7 +51,8 @@ func GetCarsInfo(c *gin.Context) {
 		bill, err := db.GetChargingBillFromPileId(context.Background(), int64(pileId))
 		if err != nil {
 			logrus.Debug(err.Error())
-			sendCarResponse(c, errno.ConvertErr(err), nil)
+			SendCarsResponse(c, errno.ConvertErr(err), nil)
+			return
 		}
 		logrus.Debug("bill id: " + strconv.Itoa(bill.BillId))
 		loc, _ := time.LoadLocation("Local")
@@ -61,7 +62,8 @@ func GetCarsInfo(c *gin.Context) {
 		logrus.Debug("totalTime: " + totalTime.String())
 		if err != nil {
 			logrus.Debug(err.Error())
-			sendCarResponse(c, errno.ConvertErr(err), nil)
+			SendCarsResponse(c, errno.ConvertErr(err), nil)
+			return
 		}
 		endTime := startTime.Add(totalTime)
 		logrus.Debug("endTime: " + endTime.Format(constants.TimeLayoutStr))
@@ -90,7 +92,8 @@ func GetCarsInfo(c *gin.Context) {
 			remainTime, err = time.ParseDuration(strconv.FormatFloat(newRemain, 'f', 4, 64) + "h")
 			if err != nil {
 				logrus.Debug(err.Error())
-				sendCarResponse(c, errno.ConvertErr(err), nil)
+				SendCarsResponse(c, errno.ConvertErr(err), nil)
+				return
 			}
 
 			n++
@@ -119,6 +122,7 @@ func SendCarsResponse(c *gin.Context, err error, data []CarInfo) {
 		c.JSON(http.StatusOK, CarsResp{
 			StatusMsg:  Err.ErrMsg,
 			StatusCode: Err.ErrCode,
+			CarsInfo:   []CarInfo{},
 		})
 		return
 	}
