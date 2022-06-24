@@ -42,7 +42,17 @@ func main() {
 				charge_Type = getChargeType()
 			}
 		case "B":
+			{
+				//默认所有充电桩都是开启状态，忽略Num部分
+				pileTag, pileType := getPileTagTy(v.Id)
+				postPileStatus(pileTag, pileType)
+			}
 		case "C":
+			{
+				carID := getCarID(v.Id)
+				chargeQuantity = v.Num
+				chargeType = getChargeType()
+			}
 		}
 	}
 }
@@ -53,4 +63,18 @@ func getCarID(a string) (id int) {
 		panic(err)
 	}
 	return
+}
+
+func getPileTagTy(a string) (id string, pile_type int) {
+	id = a[1:]
+	if tag := a[0]; tag == 'F' {
+		pile_type = 0
+	} else if tag == 'T' {
+		pile_type = 1
+	}
+	return
+}
+
+func postPileStatus(id string, pile_type int) {
+
 }
