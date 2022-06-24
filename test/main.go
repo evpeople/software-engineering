@@ -56,13 +56,9 @@ func main() {
 		}
 	}
 }
-func getCarID(a string) (id int) {
+func getCarID(a string) string {
 	a = a[1:]
-	id, err := strconv.Atoi(a)
-	if err != nil {
-		panic(err)
-	}
-	return
+	return a
 }
 
 func getPileTagTy(a string) (id string, pile_type int) {
