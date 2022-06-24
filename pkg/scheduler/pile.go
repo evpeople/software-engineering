@@ -1,9 +1,11 @@
 package scheduler
 
 import (
-	 "time"
+	"time"
+
 	"github.com/sirupsen/logrus"
 )
+
 // 充电桩状态的枚举类型
 type PileStatus int
 
@@ -33,39 +35,60 @@ type Pile struct {
 	ChargeTotalCnt      int
 	ChargeTotalQuantity float64
 	Channel             chan Car
-	Signals 					Signals
+	Signals             Signals
+	EmptyTimePredict    int64
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
-
-
-func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus,askForPileReady*chan bool) *Pile {
+func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus, askForPileReady *chan bool) *Pile {
 	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0,
-		 make(chan Car, maxWaitingNum),Signals{askForPileReady,make(chan bool)}}
-	
+		make(chan Car, maxWaitingNum), Signals{askForPileReady, make(chan bool)}, time.Now().Unix()}
+
 }
 
+func (p *Pile) startCharge(car *Car, channel chan Event) {
+	logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
+	t := float32(car.chargingQuantity) / p.Power
+	startTime := time.Now().Unix()
+	time.Sleep(time.Duration(t) * time.Second)
+	endTime := time.Now().Unix()
+	select {
+	case <-p.Signals.stopPile:
+		logrus.Debug("pile ", p.PileId, " is stoped")
+		break
+	default:
+		channel <- *NewChargeFinishEvent(car.carId, p.PileId, startTime, endTime)
+		// p.ChargeTotalCnt++
+		// p.ChargeTotalQuantity += float64(car.chargingQuantity)
+		// //TODO: finish a charing: set the bill finish here
+	}
+}
+
+//shit code never use :run
 func (p *Pile) run() {
 	go func() {
 		var car Car
 		for {
-			select {
+			select { // get car from channel
 			case car = <-p.Channel:
 			default:
-				*p.Signals.isPileReady<-true
-				logrus.Debug("pile ",p.PileId," is empty")
-				car =  <-p.Channel
+				*p.Signals.isPileReady <- true
+				logrus.Debug("pile ", p.PileId, " is empty")
+				car = <-p.Channel // blocking here
+				p.EmptyTimePredict = time.Now().Unix()
 			}
-			logrus.Info("pile ",p.PileId," got car ",car.carId,"Start ")
-			t:=float32(car.chargingQuantity)/p.Power
-			time.Sleep(time.Duration(t)*time.Second)
+
+			logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
+			t := float32(car.chargingQuantity) / p.Power
+			time.Sleep(time.Duration(t) * time.Second)
+
 			select {
 			case <-p.Signals.stopPile:
-				logrus.Debug("pile ",p.PileId," is stoped")
+				logrus.Debug("pile ", p.PileId, " is stoped")
 				break
 			default:
 				p.ChargeTotalCnt++
-				p.ChargeTotalQuantity+=float64(car.chargingQuantity)
+				p.ChargeTotalQuantity += float64(car.chargingQuantity)
 				//TODO: finish a charing: set the bill finish here
 			}
 		}

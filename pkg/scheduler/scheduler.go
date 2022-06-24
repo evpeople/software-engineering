@@ -83,9 +83,21 @@ func queryFor(userId int64) {
 
 }
 
+func (s *Scheduler) runDecider() {
+	channel := make(chan Event, 10)
+	
+	for {
+		c := <-channel
+		switch c.eventType {
+		case "sdf":
+		}
+	}
+}
+
+//shit code never use :run
 func (s *Scheduler) run() {
 	for {
-		if s.waitingArea.Front() == nil {
+		if s.waitingArea.Front() == nil { //if no waiting car
 			logrus.Debug("there is no car in the waitingArea.")
 			s.mutex.Lock() //P
 		}
