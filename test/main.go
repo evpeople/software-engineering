@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Event struct {
@@ -29,13 +31,35 @@ type Pile struct {
 
 var URL string
 var Token string
+var PilesWrite *bufio.Writer
+var WaitWrite *bufio.Writer
 
 func main() {
 	// 打开json文件
 	// URL = "http://122.9.146.200:8080/v1"
 	URL = "http://192.168.147.122:8080/v1"
 	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTksImV4cCI6MTY1NjE0NDI1OSwib3JpZ19pYXQiOjE2NTYxNDA2NTl9.EAGDoG5beb1hblLD6MiQmPoAoUkM2VBUdFHdMhqdtew"
-	jsonFile, err := os.Open("data.json")
+	jsonFile, _ := os.Open("data.json")
+
+	PilesFilePath := "./piles.txt"
+	PilesFile, err := os.OpenFile(PilesFilePath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("文件打开失败", err)
+	}
+	//及时关闭file句柄
+	defer PilesFile.Close()
+	//写入文件时，使用带缓存的 *Writer
+	PilesWrite = bufio.NewWriter(PilesFile)
+	WaitingFilePath := "./waiting.txt"
+	WaitFile, err := os.OpenFile(WaitingFilePath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("文件打开失败", err)
+	}
+	//及时关闭file句柄
+	defer WaitFile.Close()
+	//写入文件时，使用带缓存的 *Writer
+	WaitWrite = bufio.NewWriter(WaitFile)
+	//Flush将缓存的文件真正写入到文件中
 
 	// 最好要处理以下错误
 	if err != nil {
@@ -52,7 +76,7 @@ func main() {
 
 	fmt.Println(event)
 	for _, v := range event {
-		fmt.Println(v.Type)
+		// fmt.Println(v.Type)
 		switch v.Type {
 		case "A":
 			{
@@ -79,9 +103,12 @@ func main() {
 				sendCharge(carIdInt, chargeType, chargeQuantity)
 			}
 		}
+		go getWaitArea()
+		go getWaitChargeCar()
+		time.Sleep(30 * time.Second)
 	}
-	getWaitArea()
-	getWaitChargeCar()
+	PilesWrite.Flush()
+	WaitWrite.Flush()
 }
 
 func getCarID(a string) string {
@@ -150,10 +177,15 @@ func getWaitArea() {
 	// var out bytes.Buffer
 	// json.Indent(&out, body, "", "\t")
 	// fmt.Printf("student=%v\n", out.String())
-	fmt.Println(string(body))
+	// fmt.Println(string(body))
+	// WaitWrite.WriteString(out.String())
+	WaitWrite.Write(body)
+	WaitWrite.WriteString("\n\n\n")
+	WaitWrite.Flush()
 	var res []WaitAreaQuest
 	_ = json.Unmarshal(body, &res)
 	fmt.Println(res)
+
 }
 func getWaitChargeCar() {
 	piles := [5]Pile{
@@ -181,7 +213,6 @@ func getWaitChargeCar() {
 
 	for _, v := range piles {
 		u := fmt.Sprintf(URL+"/admin/cars"+Token+"&pile_type=%d&pile_tag=%d", v.Pile_type, v.Pile_tag)
-		fmt.Println(u)
 		resp, err := http.Get(u)
 		if err != nil {
 			return
@@ -191,9 +222,12 @@ func getWaitChargeCar() {
 		// var out bytes.Buffer
 		// json.Indent(&out, body, "", "\t")
 		// fmt.Printf("student=%v\n", out.String())
-		fmt.Println(string(body))
+		PilesWrite.Write(body)
+		PilesWrite.WriteByte('\n')
+		// fmt.Println(string(body))
 		var res []WaitAreaQuest
 		_ = json.Unmarshal(body, &res)
-		fmt.Println(res)
+		// fmt.Println(res)
 	}
+	PilesWrite.Flush()
 }
