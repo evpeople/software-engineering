@@ -17,6 +17,7 @@ import (
 type PileStatus int
 
 const (
+	MUL                  = 10
 	On        PileStatus = iota + 1 // EnumIndex = 1，充电桩开启
 	Off                             // EnumIndex = 2，充电桩关闭
 	Charging                        // EnumIndex = 3，充电桩正在充电
@@ -98,7 +99,7 @@ type Pile struct {
 
 func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power float32, status PileStatus, siganl *semaphore.Weighted) *Pile {
 	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0,
-		siganl, 0, sync.Mutex{}, time.Now().Unix(), list.New(), nil, sync.Mutex{}}
+		siganl, time.Now().Unix(), sync.Mutex{}, time.Now().Unix(), list.New(), nil, sync.Mutex{}}
 }
 
 func (p *Pile) isAlive() bool {
@@ -136,17 +137,21 @@ func (p *Pile) startTime() int64 {
 
 func (p *Pile) StartChargeNext() {
 	go func() {
-
+		logrus.Info("pile", p.PileId, ": Charge next")
 		p.CarsLock.Lock()
 		next := p.WaitingArea.Front()
 		if next == nil { //pile is empty
-			p.CarsLock.Unlock()
 			p.chargingCar = nil //charging nil
+			logrus.Debug("pile ", p.PileId, " temp sleep")
+			p.CarsLock.Unlock()
 			return
 		}
 		car, ok := next.Value.(*Car)
-		currentBill := &db.Bill{CarId: int(car.carId), BillId: int(car.carId), BillGenTime: time.Now().Format(constants.TimeLayoutStr), PileId: p.PileId, ChargeType: car.chargingType}
+
 		if ok {
+			//TODO:car start charging here
+			currentBill := &db.Bill{CarId: int(car.carId), BillId: int(car.carId), BillGenTime: time.Now().Format(constants.TimeLayoutStr), PileId: p.PileId, ChargeType: car.chargingType}
+
 			currentBill.StartTime = time.Now().Format(constants.TimeLayoutStr) // start_time
 			err := db.CreateBill(context.Background(), []*db.Bill{currentBill})
 			if err != nil {
@@ -158,27 +163,30 @@ func (p *Pile) StartChargeNext() {
 		p.CarsLock.Unlock()
 
 		if ok {
+			duration := p.chargeTime(car.chargingQuantity)
 
-			logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
-			duration := float32(car.chargingQuantity) / p.Power
+			logrus.Info(time.Now(), "--", time.Now().Unix(), "pile ", p.PileId, " got car ", car.carId, "Start and will charge for ", duration, "ms.")
 			startTime := time.Now().Unix()
 
-			time.Sleep(time.Duration(duration) * time.Second)
+			time.Sleep(time.Duration(duration) * time.Millisecond)
 
 			endTime := time.Now().Unix()
-
+			logrus.Info("pile ", p.PileId, " charging car ", car.carId, " finish at ", endTime)
 			t := p.startTime()
+			logrus.Info(" pile ", p.PileId, " start at ", t)
 			if t < startTime && t > 0 {
-				quantity := float64(p.Power) * float64((endTime-startTime)/1)
+				logrus.Debug("pile ", p.PileId, " finish car ", car.carId, " from ", startTime, " to ", endTime)
+				quantity := float64(car.chargingQuantity)
 				p.ChargeTotalCnt++
 				p.ChargeTotalQuantity += quantity
 				p.CarsLock.Lock()
 
 				//TODO: finish a charing: set the bill finish and other things here
 				//TODO: when add codes notice that no blocking alows here
+
 				p.CarsLock.Unlock()
 				p.StartChargeNext()
-
+				p.Signal.Release(1)
 			}
 		}
 
@@ -224,4 +232,8 @@ func GetPileById(pileId int) *Pile {
 		}
 	}
 	return nil
+}
+
+func (p *Pile) chargeTime(quantity float64) int64 {
+	return int64(quantity / float64(p.Power*MUL) * 3600 * 1000)
 }

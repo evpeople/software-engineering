@@ -11,7 +11,7 @@ import (
 
 type ChargingParam struct {
 	ChargingType     int   `json:"charging_type"`
-	ChargingQuantity int   `json:"charging_quantity"`
+	ChargingQuantity float64 `json:"charging_quantity"`
 	CarId            int64 `json:"car_id"`
 }
 
@@ -24,6 +24,7 @@ func Charge(c *gin.Context) {
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
 		return
 	}
+	logrus.Debug("car_id ", params.CarId, " ask for charge", params.ChargingQuantity, " type", params.ChargingType)
 	queueId, num := scheduler.WhenCarComing(userId, params.CarId, params.ChargingType, params.ChargingQuantity)
 	sendChargingResponse(c, errno.Success, chargingRespData{queueId > 0, queueId, num})
 }
