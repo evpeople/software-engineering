@@ -33,22 +33,21 @@ func Init() {
 	//todo: init by reading config text
 	//fastCharingPile
 	s.fastCharingPile = list.New()
-	s.hasPileReady = &pileReadyChan
 
 	for i := 0; i < s.fastCharingPileNum; i++ {
-		s.fastCharingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Fast, DefaultFastPower, On, s.hasPileReady))
+		s.fastCharingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Fast, DefaultFastPower, On, s.eventChannel))
 	}
 	//trickleChargingPile
 	s.trickleChargingPile = list.New()
 
 	for i := 0; i < s.trickleChargingPileNum; i++ {
-		s.trickleChargingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Trickle, DefaultTricklePower, On, s.hasPileReady))
+		s.trickleChargingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Trickle, DefaultTricklePower, On, s.eventChannel))
 	}
 	s.waitingArea = list.New()
 }
 
 type Scheduler struct {
-	mutex                  sync.Mutex
+	mutex                  sync.Mutex //mutex between scheduler threads.
 	number                 int //the number of the last car entered the waiting area
 	trickleChargingPileNum int //trickle means slow
 	fastCharingPileNum     int
@@ -56,8 +55,9 @@ type Scheduler struct {
 	ChargingQueueLen       int
 	trickleChargingPile    *list.List
 	fastCharingPile        *list.List
+
 	waitingArea            *list.List
-	hasPileReady           *chan bool
+	eventChannel           *chan Event
 }
 
 //isFull tests if the scheduler can handle more charging request
@@ -83,17 +83,25 @@ func queryFor(userId int64) {
 
 }
 
-func (s *Scheduler) runDecider() {
-	channel := make(chan Event, 10)
-	
-	for {
-		c := <-channel
-		switch c.eventType {
-		case "sdf":
+func (s *Scheduler) runEventsListener() {
+	go func() {
+		for {
+			c := <-*s.eventChannel
+			pileId:=c.pileId
+			p:=GetPileById(pileId)
+			p.ChargeTotalCnt++
+			p.ChargeTotalQuantity += float64(car.chargingQuantity)
+			//TODO: finish a charing: set the bill finish here
 		}
-	}
+	}()
 }
 
+func (s *Scheduler)runScheduler(){
+
+}
+
+
+/*
 //shit code never use :run
 func (s *Scheduler) run() {
 	for {
@@ -123,14 +131,14 @@ func (s *Scheduler) run() {
 		if addInPile {
 			s.waitingArea.Remove(s.waitingArea.Front())
 		} else {
-			<-*s.hasPileReady
+			<-*s.eventChannel
 		}
 	}
 }
-
-func (s *Scheduler) stopPile(pileId int) { // stop a pile when it is shut down by admin or of force majeure
-	pile := GetPileById(pileId)
-	pile.Signals.stopPile <- true
-}
+*/
+// func (s *Scheduler) stopPile(pileId int) { // stop a pile when it is shut down by admin or of force majeure
+// 	pile := GetPileById(pileId)
+// 	pile.Signals.stopPile <- true
+// }
 
 //todo: other methods of Scheduler

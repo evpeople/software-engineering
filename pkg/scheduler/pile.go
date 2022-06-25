@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"container/list"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -34,36 +36,69 @@ type Pile struct {
 	Status              PileStatus
 	ChargeTotalCnt      int
 	ChargeTotalQuantity float64
-	Channel             chan Car
-	Signals             Signals
-	EmptyTimePredict    int64
+
+	Channel *chan Event
+
+	EmptyTimePredict int64
+
+	PileStartTime     int64
+	PileStartTimeLock sync.Mutex
+	cars              *list.List
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
-func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus, askForPileReady *chan bool) *Pile {
+func NewPile(pileId int, maxWaitingNum int, pileType int, power float32, status PileStatus, eventChan *chan Event) *Pile {
 	return &Pile{pileId, maxWaitingNum, pileType, power, status, 0, 0,
-		make(chan Car, maxWaitingNum), Signals{askForPileReady, make(chan bool)}, time.Now().Unix()}
+		eventChan, time.Now().Unix(), 0, sync.Mutex{}, list.New()}
 
 }
 
-func (p *Pile) startCharge(car *Car, channel chan Event) {
-	logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
-	t := float32(car.chargingQuantity) / p.Power
-	startTime := time.Now().Unix()
-	time.Sleep(time.Duration(t) * time.Second)
-	endTime := time.Now().Unix()
-	select {
-	case <-p.Signals.stopPile:
-		logrus.Debug("pile ", p.PileId, " is stoped")
-		break
-	default:
-		channel <- *NewChargeFinishEvent(car.carId, p.PileId, startTime, endTime)
-		// p.ChargeTotalCnt++
-		// p.ChargeTotalQuantity += float64(car.chargingQuantity)
-		// //TODO: finish a charing: set the bill finish here
-	}
+func (p *Pile) isAlive() bool {
+	p.PileStartTimeLock.Lock()
+	ans := p.PileStartTime > 0
+	p.PileStartTimeLock.Unlock()
+	return ans
 }
 
+func (p *Pile) reStart() {
+	p.PileStartTimeLock.Lock()
+	p.PileStartTime = time.Now().Unix()
+	p.PileStartTimeLock.Unlock()
+}
+
+func (p *Pile) shutdown() {
+	p.PileStartTimeLock.Lock()
+	p.PileStartTime = 0
+	p.PileStartTimeLock.Unlock()
+}
+
+func (p *Pile) startTime() int64 {
+	p.PileStartTimeLock.Lock()
+	ans := p.PileStartTime
+	p.PileStartTimeLock.Unlock()
+	return ans
+}
+
+func (p *Pile) startCharge(car *Car) {
+	go func() {
+		logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
+		duration := float32(car.chargingQuantity) / p.Power
+		startTime := time.Now().Unix()
+		time.Sleep(time.Duration(duration) * time.Second)
+		endTime := time.Now().Unix()
+
+		t := p.startTime()
+		if t < startTime && t > 0 {
+			*p.Channel <- *NewChargeFinishEvent(car.carId, p.PileId, startTime, endTime)
+		}
+	}()
+	// p.ChargeTotalCnt++
+	// p.ChargeTotalQuantity += float64(car.chargingQuantity)
+	// //notTODO: finish a charing: set the bill finish here
+
+}
+
+/*
 //shit code never use :run
 func (p *Pile) run() {
 	go func() {
@@ -94,6 +129,7 @@ func (p *Pile) run() {
 		}
 	}()
 }
+*/
 
 func GetPileById(pileId int) *Pile {
 	var p *Pile
