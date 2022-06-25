@@ -52,7 +52,6 @@ func GetCarsInfo(c *gin.Context) {
 		SendCarsResponse(c, errno.NoWaitingCar, nil)
 		return
 	} else {
-		pile.CarsLock.Lock()
 		len := pile.WaitingArea.Len()
 		// 队列中有车辆，返回所有车辆的信息
 		carsInfoVar = make([]CarInfo, len+1)
