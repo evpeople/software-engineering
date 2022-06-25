@@ -22,6 +22,10 @@ type WaitAreaQuest struct {
 	Ctype    int `json:"ctype"`
 	Quantity int `json:"quantity"`
 }
+type Pile struct {
+	Pile_type int
+	Pile_tag  int
+}
 
 var URL string
 var Token string
@@ -30,7 +34,7 @@ func main() {
 	// 打开json文件
 	// URL = "http://122.9.146.200:8080/v1"
 	URL = "http://192.168.147.122:8080/v1"
-	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTgsImV4cCI6MTY1NjE0MDQzNywib3JpZ19pYXQiOjE2NTYxMzY4Mzd9.xtCJAU6R2ceEGZPj2h5I583KANpiDRCuiQWnot5df08"
+	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTksImV4cCI6MTY1NjE0NDI1OSwib3JpZ19pYXQiOjE2NTYxNDA2NTl9.EAGDoG5beb1hblLD6MiQmPoAoUkM2VBUdFHdMhqdtew"
 	jsonFile, err := os.Open("data.json")
 
 	// 最好要处理以下错误
@@ -77,6 +81,7 @@ func main() {
 		}
 	}
 	getWaitArea()
+	getWaitChargeCar()
 }
 
 func getCarID(a string) string {
@@ -149,4 +154,46 @@ func getWaitArea() {
 	var res []WaitAreaQuest
 	_ = json.Unmarshal(body, &res)
 	fmt.Println(res)
+}
+func getWaitChargeCar() {
+	piles := [5]Pile{
+		{
+			Pile_type: 0,
+			Pile_tag:  1,
+		},
+		{
+			Pile_type: 0,
+			Pile_tag:  2,
+		},
+		{
+			Pile_type: 1,
+			Pile_tag:  1,
+		},
+		{
+			Pile_type: 1,
+			Pile_tag:  2,
+		},
+		{
+			Pile_type: 1,
+			Pile_tag:  3,
+		},
+	}
+
+	for _, v := range piles {
+		u := fmt.Sprintf(URL+"/admin/cars"+Token+"&pile_type=%d&pile_tag=%d", v.Pile_type, v.Pile_tag)
+		fmt.Println(u)
+		resp, err := http.Get(u)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
+		// var out bytes.Buffer
+		// json.Indent(&out, body, "", "\t")
+		// fmt.Printf("student=%v\n", out.String())
+		fmt.Println(string(body))
+		var res []WaitAreaQuest
+		_ = json.Unmarshal(body, &res)
+		fmt.Println(res)
+	}
 }
