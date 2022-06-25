@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -18,13 +17,14 @@ type Event struct {
 	Num   int    `json:"Num"`
 }
 
-
 var URL string
+var Token string
 
 func main() {
 	// 打开json文件
-	URL = "http://122.9.146.200:8080/v1"
-
+	// URL = "http://122.9.146.200:8080/v1"
+	URL = "http://192.168.147.122:8080/v1"
+	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTcsImV4cCI6MTY1NjEzNTgwNSwib3JpZ19pYXQiOjE2NTYxMzIyMDV9.AjyNJ7se2rpnHPSCmtU_BM7KC8CSHGkequlsMYeQm_g"
 	jsonFile, err := os.Open("data.json")
 
 	// 最好要处理以下错误
@@ -102,7 +102,7 @@ func stopCharge(carID string) {
 	data := make(map[string]interface{})
 	data["car_id"] = carID
 	bytesData, _ := json.Marshal(data)
-	resp, _ := http.Post(URL+"/charge/stop", "application/json", bytes.NewReader(bytesData))
+	resp, _ := http.Post(URL+"/charge/stop"+Token, "application/json", bytes.NewReader(bytesData))
 	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
@@ -113,7 +113,7 @@ func sendCharge(id, typ, quantity int) {
 	data["charging_type"] = typ
 	data["charging_quantity"] = quantity
 	bytesData, _ := json.Marshal(data)
-	resp, _ := http.Post(URL+"/charge/come", "application/json", bytes.NewReader(bytesData))
+	resp, _ := http.Post(URL+"/charge/come"+Token, "application/json", bytes.NewReader(bytesData))
 	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
@@ -123,7 +123,7 @@ func sendPileReset(id string, pile_type int) {
 	data["id"] = id
 	data["pile_type"] = pile_type
 	bytesData, _ := json.Marshal(data)
-	resp, _ := http.Post(URL+"/admin/pile/"+id, "application/json", bytes.NewReader(bytesData))
+	resp, _ := http.Post(URL+"/admin/pile/"+id+Token, "application/json", bytes.NewReader(bytesData))
 	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
