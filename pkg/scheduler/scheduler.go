@@ -300,13 +300,46 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 }
 
 func WhenChargingStop(carId int, pileId int) {
+	ans := false
 	S.Lock.Lock()
 	pile := GetPileById(pileId)
 	pile.CarsLock.Lock()
-	if int(pile.ChargingCar.carId) == carId {
-		pile.ChargingCar = nil
-		pile.reStart()
+	logrus.Debug(" this is Before stop :", carId, pileId)
+	if pile.ChargingCar != nil {
+		if int(pile.ChargingCar.carId) == carId {
+			logrus.Debug(" this is After stop 1:", carId, pileId)
+			pile.ChargingCar = nil
+			pile.reStart()
+			ans = true
+		}
 	}
+	if !ans {
+		for e := pile.WaitingArea.Front(); e != nil; e = e.Next() {
+			if car, ok := e.Value.(*Car); ok && int(car.carId) == carId {
+				logrus.Debug(" this is After stop 2:", carId, pileId)
+				pile.WaitingArea.Remove(e)
+				if car.chargingType == constants.ChargingType_Fast {
+					S.fastPileSignal.Release(1)
+				}
+				if car.chargingType == constants.ChargingType_Trickle {
+					S.tricklePileSignal.Release(1)
+				}
+				ans = true
+			}
+		}
+	}
+	if !ans {
+		for e := S.WaitingArea.Front(); e != nil; e = e.Next() {
+			if car, ok := e.Value.(*Car); ok && int(car.carId) == carId {
+				logrus.Debug(" this is After stop 3:", carId, pileId)
+
+				S.WaitingArea.Remove(e)
+				ans = true
+			}
+
+		}
+	}
+
 	pile.CarsLock.Unlock()
 
 	S.Lock.Unlock()
