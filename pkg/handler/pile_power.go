@@ -36,9 +36,9 @@ func ResetPilePower(c *gin.Context) {
 		logrus.Debug("Get PileID wrong", err.Error())
 		sendPowerResponse(c, errno.ConvertErr(err), false)
 	}
-	logrus.Debug("Before: ", tarPile.IsWork)
+	//logrus.Debug("Before: ", tarPile.IsWork)
 	tarPile.IsWork = !tarPile.IsWork
-	logrus.Debug("After: ", tarPile.IsWork)
+	//logrus.Debug("After: ", tarPile.IsWork)
 	err = db.UpdatePile(context.Background(), tarPile)
 	if err != nil {
 		logrus.Debug("**update pile status failed")
