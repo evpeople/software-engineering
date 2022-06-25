@@ -89,9 +89,9 @@ func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {
 	var piles *list.List
 
 	if pileType == ChargingType_Fast {
-		piles = s.fastCharingPile
+		piles = S.fastCharingPile
 	} else if pileType == ChargingType_Trickle {
-		piles = s.trickleChargingPile
+		piles = S.trickleChargingPile
 	} else {
 		return nil
 	}
@@ -99,6 +99,25 @@ func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {
 	for i := piles.Front(); i != nil; i = i.Next() {
 		p = i.Value.(*Pile)
 		if p.PileTag == pileTag {
+			return p
+		}
+	}
+	return nil
+}
+
+func GetPileById(pileId int) *Pile {
+	var p *Pile
+	// 遍历慢充桩
+	for i := S.trickleChargingPile.Front(); i != nil; i = i.Next() {
+		p = i.Value.(*Pile)
+		if p.PileId == pileId {
+			return p
+		}
+	}
+	// 遍历快充桩
+	for i := S.fastCharingPile.Front(); i != nil; i = i.Next() {
+		p = i.Value.(*Pile)
+		if p.PileId == pileId {
 			return p
 		}
 	}

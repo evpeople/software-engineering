@@ -9,6 +9,7 @@ import (
 
 type Bill struct {
 	gorm.Model
+	CarId          int     `json:"car_id"`
 	BillId         int     `json:"bill_id" gorm:"unique"`
 	BillGenTime    string  `json:"bill_generate_time"`
 	PileId         int     `json:"pile_id"`

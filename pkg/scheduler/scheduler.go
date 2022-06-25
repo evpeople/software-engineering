@@ -16,29 +16,29 @@ const (
 	DefaultTricklePower           = 10
 )
 
-var s Scheduler
+var S Scheduler
 var nextQueueId int64 = 1 //queue id for the next coming car
 
 func Init() {
-	s.trickleChargingPileNum = DefaultTrickleChargingPileNum
-	s.fastCharingPileNum = DefaultFastCharingPileNum
-	s.waitingAreaSize = DefaultWaitingAreaSize
-	s.ChargingQueueLen = DefaultChargingQueueLen
-	s.number = 0
+	S.trickleChargingPileNum = DefaultTrickleChargingPileNum
+	S.fastCharingPileNum = DefaultFastCharingPileNum
+	S.waitingAreaSize = DefaultWaitingAreaSize
+	S.ChargingQueueLen = DefaultChargingQueueLen
+	S.number = 0
 	//todo: init by reading config text
 	//fastCharingPile
-	s.fastCharingPile = list.New()
+	S.fastCharingPile = list.New()
 
-	for i := 0; i < s.fastCharingPileNum; i++ {
-		s.fastCharingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Fast, int64(i+1), DefaultFastPower, On))
+	for i := 0; i < S.fastCharingPileNum; i++ {
+		S.fastCharingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Fast, int64(i+1), DefaultFastPower, On))
 	}
 	//trickleChargingPile
-	s.trickleChargingPile = list.New()
+	S.trickleChargingPile = list.New()
 
-	for i := 0; i < s.trickleChargingPileNum; i++ {
-		s.trickleChargingPile.PushBack(NewPile(i, s.ChargingQueueLen, ChargingType_Trickle, int64(i+1), DefaultTricklePower, On))
+	for i := 0; i < S.trickleChargingPileNum; i++ {
+		S.trickleChargingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Trickle, int64(i+1), DefaultTricklePower, On))
 	}
-	s.waitingArea = list.New()
+	S.WaitingArea = list.New()
 }
 
 type Scheduler struct {
@@ -49,23 +49,23 @@ type Scheduler struct {
 	ChargingQueueLen       int
 	trickleChargingPile    *list.List
 	fastCharingPile        *list.List
-	waitingArea            *list.List
+	WaitingArea            *list.List
 }
 
 //isFull tests if the scheduler can handle more charging request
 func (s *Scheduler) isFull() bool {
-	return s.waitingArea.Len() >= s.waitingAreaSize
+	return s.WaitingArea.Len() >= s.waitingAreaSize
 }
 
 //whenCarComing trys to put the car in the queue, if the queue is full return false else return true
 func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity int) (int64, int) {
-	if s.isFull() {
+	if S.isFull() {
 		return 0, 0 //queue if full
 	} else {
-		s.waitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
+		S.WaitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
 		nextQueueId++
-		s.number++
-		return nextQueueId - 1, s.number
+		S.number++
+		return nextQueueId - 1, S.number
 	}
 
 }
