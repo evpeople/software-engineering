@@ -39,10 +39,10 @@ func GetCarsInfo(c *gin.Context) {
 	var carsInfoVar []CarInfo
 	var car *scheduler.Car
 
-	//! test code
-	pile.WaitingArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
-	pile.WaitingArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
-	pile.WaitingArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
+	// //! test code
+	// pile.WaitingArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
+	// pile.WaitingArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
+	// pile.WaitingArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
 
 	if len := pile.WaitingArea.Len(); len == 0 {
 		// 队列中没有车
