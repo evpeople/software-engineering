@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	ChargingType_Fast    = 1
-	ChargingType_Trickle = 2
+	ChargingType_Fast    = 0
+	ChargingType_Trickle = 1
 
 	DefaultTrickleChargingPileNum = 2
 	DefaultFastCharingPileNum     = 3
@@ -30,13 +30,13 @@ func Init() {
 	S.fastCharingPile = list.New()
 
 	for i := 0; i < S.fastCharingPileNum; i++ {
-		S.fastCharingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Fast, DefaultFastPower, On))
+		S.fastCharingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Fast, int64(i+1), DefaultFastPower, On))
 	}
 	//trickleChargingPile
 	S.trickleChargingPile = list.New()
 
 	for i := 0; i < S.trickleChargingPileNum; i++ {
-		S.trickleChargingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Trickle, DefaultTricklePower, On))
+		S.trickleChargingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Trickle, int64(i+1), DefaultTricklePower, On))
 	}
 	S.WaitingArea = list.New()
 }
