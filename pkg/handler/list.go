@@ -17,7 +17,7 @@ func List(c *gin.Context) {
 	waitingCar := []WaitingCar{}
 	for i := scheduler.S.WaitingArea.Front(); i != nil; i = i.Next() {
 		c := i.Value.(*scheduler.Car)
-		waitingCar = append(waitingCar, WaitingCar{CarID: int(c.GetCarId()), Quantity: c.GetChargingQuantity(), CType: c.GetCType()})
+		waitingCar = append(waitingCar, WaitingCar{CarID: int(c.GetCarId()), Quantity: int(c.GetChargingQuantity()), CType: c.GetCType()})
 	}
 	c.JSON(http.StatusOK, waitingCar)
 }
