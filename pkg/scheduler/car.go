@@ -26,4 +26,8 @@ func (car *Car) GetChargingQuantity() int {
 	return car.chargingQuantity
 }
 
+func (car *Car) GetCType() int {
+	return car.chargingType
+}
+
 //todo: other methods of Car
