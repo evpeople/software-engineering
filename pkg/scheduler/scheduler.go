@@ -12,8 +12,10 @@ import (
 )
 
 const (
+	WaitingAreaCode               = 0
+	ChargingAreaCode              = 1
 	DefaultTrickleChargingPileNum = 2
-	DefaultFastCharingPileNum     = 1
+	DefaultFastCharingPileNum     = 3
 	DefaultWaitingAreaSize        = 10
 	DefaultChargingQueueLen       = 3
 	DefaultFastPower              = 30
@@ -30,7 +32,7 @@ func Init() {
 	S.ChargingQueueLen = DefaultChargingQueueLen
 	S.number = 0
 
-	S.lock = sync.Mutex{}
+	S.Lock = sync.Mutex{}
 	S.fastPileSignal = semaphore.NewWeighted(int64(S.fastCharingPileNum * S.ChargingQueueLen))
 	S.fastWaitingSignal = semaphore.NewWeighted(int64(S.waitingAreaSize))
 	S.fastWaitingSignal.Acquire(context.Background(), int64(S.waitingAreaSize))
@@ -71,7 +73,7 @@ type Scheduler struct {
 	tricklePileSignal    *semaphore.Weighted
 	trickleWaitingSignal *semaphore.Weighted
 
-	lock sync.Mutex //mutex between scheduler threads.
+	Lock sync.Mutex //mutex between scheduler threads.
 }
 
 //isFull tests if the scheduler can handle more charging request
@@ -112,7 +114,7 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 		logrus.Debug("#acq pile", ChargeType)
 		WaitSignal.Acquire(context.Background(), 1)
 		logrus.Debug("#acq wait", ChargeType)
-		s.lock.Lock()
+		s.Lock.Lock()
 		//firstWaitingCar
 		logrus.Info("#go find a car to charging:")
 		for e := s.WaitingArea.Front(); e != nil; e = e.Next() {
@@ -135,7 +137,7 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 				break
 			}
 		}
-		s.lock.Unlock()
+		s.Lock.Unlock()
 	}
 
 }
@@ -171,6 +173,69 @@ func chooseAPile(piles *list.List) *Pile {
 	return bestPile
 }
 
+func GetWaitingInChargeArea(chargeType int) int {
+	num := 0
+	var piles *list.List
+
+	if chargeType == constants.ChargingType_Fast {
+		piles = S.fastCharingPile
+	} else {
+		piles = S.trickleChargingPile
+	}
+	for p := piles.Front(); p != nil; p = p.Next() {
+		if pile, ok := p.Value.(*Pile); ok {
+			num += pile.WaitingArea.Len()
+		} else {
+			return -1
+		}
+	}
+	return num
+}
+
+func GetAllWaiting(chargeType int) int {
+	num := 0
+	for i := S.WaitingArea.Front(); i != nil; i = i.Next() {
+		if car, ok := i.Value.(*Car); ok {
+			if car.chargingType == chargeType {
+				num++
+			}
+		} else {
+			return -1
+		}
+	}
+	num += GetWaitingInChargeArea(chargeType)
+	return num
+}
+
+func GetQueueInfoByCarId(carId int) (int, int, int) {
+	fastNum := 0
+	trickleNum := 0
+	var num, queueId, area int
+
+	for i := S.WaitingArea.Front(); i != nil; i = i.Next() {
+		if car, ok := i.Value.(*Car); ok {
+			if car.carId == int64(carId) {
+				if car.chargingType == constants.ChargingType_Fast {
+					num = fastNum + GetWaitingInChargeArea(car.chargingType)
+				} else {
+					num = trickleNum + GetWaitingInChargeArea(car.chargingType)
+				}
+				queueId = int(car.queueId)
+				area = WaitingAreaCode
+				break
+			}
+			if car.chargingType == constants.ChargingType_Fast {
+				fastNum++
+			} else {
+				trickleNum++
+			}
+		} else {
+			return -1, -1, -1
+		}
+	}
+	return queueId, num, area
+}
+
 //todo: other methods of Scheduler
 
 //whenCarComing trys to put the car in the queue, if the queue is full return false else return true
@@ -180,7 +245,7 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 	num := -1
 
 	if chargingQuantity < 0 { //change type
-		S.lock.Lock()
+		S.Lock.Lock()
 		for e := S.WaitingArea.Front(); e != nil; e = e.Next() {
 			if car, ok := e.Value.(*Car); ok && car.carId == carId {
 				S.WaitingArea.Remove(e)
@@ -194,9 +259,9 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 				break
 			}
 		}
-		S.lock.Unlock()
+		S.Lock.Unlock()
 	} else if chargingType == constants.ChargingType_ChangeQuantity { //change quantity
-		S.lock.Lock()
+		S.Lock.Lock()
 		for e := S.WaitingArea.Front(); e != nil; e = e.Next() {
 			if car, ok := e.Value.(*Car); ok && car.carId == carId {
 				logrus.Debug("changing car quantity ", carId, "from", car.carId, " to ", chargingQuantity)
@@ -207,16 +272,16 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 				break
 			}
 		}
-		S.lock.Unlock()
+		S.Lock.Unlock()
 	} else if !S.isFull() {
-		S.lock.Lock()
+		S.Lock.Lock()
 		S.WaitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
 		nextQueueId++
 		S.number++
 		resp = true
 		queueId = nextQueueId - 1
 		num = S.number
-		S.lock.Unlock()
+		S.Lock.Unlock()
 
 	}
 
@@ -235,7 +300,7 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 }
 
 func WhenChargingStop(carId int, pileId int) {
-	S.lock.Lock()
+	S.Lock.Lock()
 	pile := GetPileById(pileId)
 	pile.CarsLock.Lock()
 	if int(pile.chargingCar.carId) == carId {
@@ -244,5 +309,5 @@ func WhenChargingStop(carId int, pileId int) {
 	}
 	pile.CarsLock.Unlock()
 
-	S.lock.Unlock()
+	S.Lock.Unlock()
 }

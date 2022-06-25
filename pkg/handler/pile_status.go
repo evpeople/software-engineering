@@ -3,12 +3,13 @@ package handler
 import (
 	"context"
 	"net/http"
-	//"crypto/md5"
+	//"errors"
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	//"gorm.io/gorm"
 )
 
 //查看所有充电桩状态
@@ -67,24 +68,24 @@ func sendPileResponse(c *gin.Context, err error, data []PileRepo) {
 	})
 }
 
-//todo
 /*
 func CreatePile(req *db.PileInfo) (uint, error) {
-	users, err := db.QueryPileExist(context.Background(), req.UserName)
+	pile, err := db.QueryPileExist(context.Background(), req.PileTag, req.PileType)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		h := md5.New()
-		if _, err = io.WriteString(h, req.Password); err != nil {
-			return 0, err
-		}
-		passWord := fmt.Sprintf("%x", h.Sum(nil))
-		ur := []*db.PileInfo{{
-			UserName: req.UserName,
-			Password: passWord,
+		curPile := []*db.PileInfo{{
+			PileID:req.PileID,
+			PileType:req.PileType,
+			PileTag:req.PileTag,
+			IsWork:req.IsWork,
+			ChargingTotalCount:req.ChargingTotalCount,
+			ChargingTotalTime:req.ChargingTotalTime,
+			ChargingTotalQuantity:req.ChargingTotalQuantity,
+			Power:req.Power,
 		}}
-		err := db.CreatePile(context.Background(), ur)
-		return ur[0].ID, err
+		err := db.CreatePile(context.Background(), curPile)
+		return curPile[0].ID, err
 	} else {
-		return users.ID, errno.UserAlreadyExistErr
+		return pile.ID, errno.UserAlreadyExistErr
 	}
 }
 */

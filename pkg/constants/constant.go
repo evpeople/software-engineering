@@ -9,9 +9,9 @@ const (
 	SecretKey       = "secret key"
 	TimeLayoutStr   = "2006-01-02 15:04:05"
 	QuickCharge     = 0
-	Scale           = 12 // 比例尺，测试5min=实际时间1h
 
 	ChargingType_Fast           = 0
 	ChargingType_Trickle        = 1
 	ChargingType_ChangeQuantity = 2
+	Scale                       = 10 // 比例尺，测试1min=实际时间10min
 )
