@@ -14,6 +14,9 @@ const (
 	ChargingType_Fast    = 0
 	ChargingType_Trickle = 1
 
+	WaitingAreaCode  = 0
+	ChargingAreaCode = 1
+
 	DefaultTrickleChargingPileNum = 2
 	DefaultFastCharingPileNum     = 3
 	DefaultWaitingAreaSize        = 100
@@ -198,6 +201,69 @@ func chooseAPile(piles *list.List) *Pile {
 		}
 	}
 	return bestPile
+}
+
+func GetWaitingInChargeArea(chargeType int) int {
+	num := 0
+	var piles *list.List
+
+	if chargeType == ChargingType_Fast {
+		piles = S.fastCharingPile
+	} else {
+		piles = S.trickleChargingPile
+	}
+	for p := piles.Front(); p != nil; p = p.Next() {
+		if pile, ok := p.Value.(*Pile); ok {
+			num += pile.WaitingArea.Len()
+		} else {
+			return -1
+		}
+	}
+	return num
+}
+
+func GetAllWaiting(chargeType int) int {
+	num := 0
+	for i := S.WaitingArea.Front(); i != nil; i = i.Next() {
+		if car, ok := i.Value.(*Car); ok {
+			if car.chargingType == chargeType {
+				num++
+			}
+		} else {
+			return -1
+		}
+	}
+	num += GetWaitingInChargeArea(chargeType)
+	return num
+}
+
+func GetQueueInfoByCarId(carId int) (int, int, int) {
+	fastNum := 0
+	trickleNum := 0
+	var num, queueId, area int
+
+	for i := S.WaitingArea.Front(); i != nil; i = i.Next() {
+		if car, ok := i.Value.(*Car); ok {
+			if car.carId == int64(carId) {
+				if car.chargingType == ChargingType_Fast {
+					num = fastNum + GetWaitingInChargeArea(car.chargingType)
+				} else {
+					num = trickleNum + GetWaitingInChargeArea(car.chargingType)
+				}
+				queueId = int(car.queueId)
+				area = WaitingAreaCode
+				break
+			}
+			if car.chargingType == ChargingType_Fast {
+				fastNum++
+			} else {
+				trickleNum++
+			}
+		} else {
+			return -1, -1, -1
+		}
+	}
+	return queueId, num, area
 }
 
 //todo: other methods of Scheduler
