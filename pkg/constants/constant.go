@@ -5,7 +5,8 @@ const (
 	UserTableName   = "user"
 	CarsTableName   = "cars"
 	BillTableName   = "bills"
-	PileTableName	= "piles"
+	PileTableName   = "piles"
 	SecretKey       = "secret key"
 	TimeLayoutStr   = "2006-01-02 15:04:05"
+	Scale           = 12 // 比例尺，测试5min=实际时间1h
 )
