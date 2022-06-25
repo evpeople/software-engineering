@@ -183,7 +183,7 @@ func (p *Pile) StartChargeNext() {
 				p.ChargeTotalQuantity += quantity
 				p.CarsLock.Lock()
 
-				//TODO: finish a charing: set the bill finish and other things her
+				//TODO: finish a charing: set the bill finish and other things here
 				//TODO: when add codes notice that no blocking alows here
 				// 结束充电
 				bill, _ := db.GetBillFromBillId(context.Background(), car.carId)
@@ -204,6 +204,8 @@ func (p *Pile) StartChargeNext() {
 				if bill.ChargeType == constants.QuickCharge {
 					power = 30
 				}
+				bill.ChargeQuantity = duration.Hours() * float64(power) // 充电量
+
 				bill.ServiceFee = 0.8 * bill.ChargeQuantity // 三个费用
 				bill.ChargeFee = CalChargeFee(bill.StartTime, bill.EndTime, power)
 				bill.TotalFee = bill.ServiceFee + bill.ChargeFee
