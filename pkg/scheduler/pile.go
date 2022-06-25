@@ -2,6 +2,14 @@ package scheduler
 
 import (
 	"container/list"
+	"context"
+	"sync"
+	"time"
+
+	"github.com/evpeople/softEngineer/pkg/constants"
+	"github.com/evpeople/softEngineer/pkg/dal/db"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 	// "github.com/evpeople/softEngineer/pkg/errno"
 )
 
@@ -34,8 +42,16 @@ type Pile struct {
 	Status              PileStatus
 	ChargeTotalCnt      int
 	ChargeTotalQuantity float64
-	ChargeArea          *list.List
 
+	Signal *semaphore.Weighted
+
+	PileStartTime     int64
+	PileStartTimeLock sync.Mutex
+
+	emptyTimePredict int64
+	WaitingArea      *list.List
+	chargingCar      *Car
+	CarsLock         sync.Mutex //lock for above 3
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
 
@@ -80,8 +96,94 @@ type Pile struct {
 // 	}
 // }
 
-func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power float32, status PileStatus) *Pile {
-	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0, list.New()}
+func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power float32, status PileStatus, siganl *semaphore.Weighted) *Pile {
+	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0,
+		siganl, 0, sync.Mutex{}, time.Now().Unix(), list.New(), nil, sync.Mutex{}}
+}
+
+func (p *Pile) isAlive() bool {
+	p.PileStartTimeLock.Lock()
+	ans := p.PileStartTime > 0
+	p.PileStartTimeLock.Unlock()
+	return ans
+}
+
+func (p *Pile) reStart() {
+	p.PileStartTimeLock.Lock()
+	p.PileStartTime = time.Now().Unix()
+	p.PileStartTimeLock.Unlock()
+}
+
+func (p *Pile) shutdown() {
+	p.PileStartTimeLock.Lock()
+	p.PileStartTime = 0
+	p.PileStartTimeLock.Unlock()
+}
+
+func (p *Pile) startTime() int64 {
+	p.PileStartTimeLock.Lock()
+	ans := p.PileStartTime
+	p.PileStartTimeLock.Unlock()
+	return ans
+}
+
+// func (p*Pile)TheChargingCar()Car{
+// 	p.CarsLock.Lock()
+// 	ans:=*p.chargingCar
+// 	p.CarsLock.Unlock()
+// 	return ans
+// }
+
+func (p *Pile) StartChargeNext() {
+	go func() {
+
+		p.CarsLock.Lock()
+		next := p.WaitingArea.Front()
+		if next == nil { //pile is empty
+			p.CarsLock.Unlock()
+			p.chargingCar = nil //charging nil
+			return
+		}
+		car, ok := next.Value.(*Car)
+		currentBill := &db.Bill{CarId: int(car.carId), BillId: int(car.carId), BillGenTime: time.Now().Format(constants.TimeLayoutStr), PileId: p.PileId, ChargeType: car.chargingType}
+		if ok {
+			currentBill.StartTime = time.Now().Format(constants.TimeLayoutStr) // start_time
+			err := db.CreateBill(context.Background(), []*db.Bill{currentBill})
+			if err != nil {
+				logrus.Debug(err)
+			}
+			p.chargingCar = car //charging car
+			p.WaitingArea.Remove(p.WaitingArea.Front())
+		}
+		p.CarsLock.Unlock()
+
+		if ok {
+
+			logrus.Info("pile ", p.PileId, " got car ", car.carId, "Start ")
+			duration := float32(car.chargingQuantity) / p.Power
+			startTime := time.Now().Unix()
+
+			time.Sleep(time.Duration(duration) * time.Second)
+
+			endTime := time.Now().Unix()
+
+			t := p.startTime()
+			if t < startTime && t > 0 {
+				quantity := float64(p.Power) * float64((endTime-startTime)/1)
+				p.ChargeTotalCnt++
+				p.ChargeTotalQuantity += quantity
+				p.CarsLock.Lock()
+
+				//TODO: finish a charing: set the bill finish and other things here
+				//TODO: when add codes notice that no blocking alows here
+				p.CarsLock.Unlock()
+				p.StartChargeNext()
+
+			}
+		}
+
+	}()
+
 }
 
 func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {
