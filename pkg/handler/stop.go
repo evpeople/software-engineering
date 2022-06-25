@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/evpeople/softEngineer/pkg/scheduler"
+
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
+	"github.com/evpeople/softEngineer/pkg/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -17,7 +18,7 @@ import (
 // const TimeLayoutStr = "2006-01-02 15:04:05"
 
 func Stop(c *gin.Context) {
-	userId := strconv.Itoa(GetIdFromRequest(c))
+	// userId := strconv.Itoa(GetIdFromRequest(c))
 	var params StopParam
 	if err := c.ShouldBind(&params); err != nil {
 		logrus.Debug("stop charging params not bind")
@@ -30,11 +31,11 @@ func Stop(c *gin.Context) {
 	}
 
 	temp_car_id, _ := strconv.ParseInt(params.CarId, 10, 64)
-	tmp_id, _ := db.GetUserIDFromCarID(context.Background(), temp_car_id)
-	if userId != strconv.Itoa(tmp_id) {
-		logrus.Debug(params)
-		SendBaseResponse(c, errno.ParamErr, nil)
-	}
+	// tmp_id, _ := db.GetUserIDFromCarID(context.Background(), temp_car_id)
+	// if userId != strconv.Itoa(tmp_id) {
+	// 	logrus.Debug(params)
+	// 	SendBaseResponse(c, errno.ParamErr, nil)
+	// }
 	// 修改车辆状态
 	car, _ := db.GetCarFromCarID(context.Background(), temp_car_id)
 	car.IsCharge = false
@@ -79,8 +80,8 @@ func Stop(c *gin.Context) {
 		logrus.Debug("update Cars failed")
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
 	}
-	
-	scheduler.WhenChargingStop(bill.CarId,bill.PileId)
+
+	scheduler.WhenChargingStop(bill.CarId, bill.PileId)
 
 	sendStopResponse(c, errno.Success)
 }

@@ -303,9 +303,13 @@ func WhenChargingStop(carId int, pileId int) {
 	S.Lock.Lock()
 	pile := GetPileById(pileId)
 	pile.CarsLock.Lock()
-	if int(pile.ChargingCar.carId) == carId {
-		pile.ChargingCar = nil
-		pile.reStart()
+	if pile.ChargingCar != nil {
+		logrus.Debug(" this is stop1 :", carId, pileId)
+		if int(pile.ChargingCar.carId) == carId {
+			logrus.Debug(" this is stop2 :", carId, pileId)
+			pile.ChargingCar = nil
+			pile.reStart()
+		}
 	}
 	pile.CarsLock.Unlock()
 
