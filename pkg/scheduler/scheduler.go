@@ -32,7 +32,7 @@ func Init() {
 	S.ChargingQueueLen = DefaultChargingQueueLen
 	S.number = 0
 
-	S.lock = sync.Mutex{}
+	S.Lock = sync.Mutex{}
 	S.fastPileSignal = semaphore.NewWeighted(int64(S.fastCharingPileNum * S.ChargingQueueLen))
 	S.fastWaitingSignal = semaphore.NewWeighted(int64(S.waitingAreaSize))
 	S.fastWaitingSignal.Acquire(context.Background(), int64(S.waitingAreaSize))
@@ -73,7 +73,7 @@ type Scheduler struct {
 	tricklePileSignal    *semaphore.Weighted
 	trickleWaitingSignal *semaphore.Weighted
 
-	lock sync.Mutex //mutex between scheduler threads.
+	Lock sync.Mutex //mutex between scheduler threads.
 }
 
 //isFull tests if the scheduler can handle more charging request
@@ -86,11 +86,11 @@ func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity
 	if S.isFull() {
 		return 0, 0 //queue if full
 	} else {
-		S.lock.Lock()
+		S.Lock.Lock()
 		S.WaitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
 		nextQueueId++
 		S.number++
-		S.lock.Unlock()
+		S.Lock.Unlock()
 		if chargingType == ChargingType_Trickle {
 			S.trickleWaitingSignal.Release(1)
 			logrus.Debug("rel wait", chargingType)
@@ -141,7 +141,7 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 		logrus.Debug("#acq pile", ChargeType)
 		WaitSignal.Acquire(context.Background(), 1)
 		logrus.Debug("#acq wait", ChargeType)
-		s.lock.Lock()
+		s.Lock.Lock()
 		//firstWaitingCar
 		logrus.Info("#go find a car to charging:")
 		for e := s.WaitingArea.Front(); e != nil; e = e.Next() {
@@ -164,7 +164,7 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 				break
 			}
 		}
-		s.lock.Unlock()
+		s.Lock.Unlock()
 	}
 
 }

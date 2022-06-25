@@ -15,9 +15,11 @@ type WaitingCar struct {
 
 func List(c *gin.Context) {
 	waitingCar := []WaitingCar{}
+	scheduler.S.Lock.Lock()
 	for i := scheduler.S.WaitingArea.Front(); i != nil; i = i.Next() {
 		c := i.Value.(*scheduler.Car)
 		waitingCar = append(waitingCar, WaitingCar{CarID: int(c.GetCarId()), Quantity: int(c.GetChargingQuantity()), CType: c.GetCType()})
 	}
+	scheduler.S.Lock.Unlock()
 	c.JSON(http.StatusOK, waitingCar)
 }
