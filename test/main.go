@@ -14,10 +14,10 @@ import (
 )
 
 type Event struct {
-	Type  string `json:"Type"`
-	Id    string `json:"id"`
-	CType string `json:"CType"`
-	Num   int    `json:"Num"`
+	Type  string  `json:"Type"`
+	Id    string  `json:"id"`
+	CType string  `json:"CType"`
+	Num   float64 `json:"Num"`
 }
 type WaitAreaQuest struct {
 	CarId    int `json:"car_id"`
@@ -38,7 +38,7 @@ func main() {
 	// 打开json文件
 	// URL = "http://122.9.146.200:8080/v1"
 	URL = "http://192.168.147.122:8080/v1"
-	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTksImV4cCI6MTY1NjE0NDI1OSwib3JpZ19pYXQiOjE2NTYxNDA2NTl9.EAGDoG5beb1hblLD6MiQmPoAoUkM2VBUdFHdMhqdtew"
+	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MjEsImV4cCI6MTY1NjE2ODg4Mywib3JpZ19pYXQiOjE2NTYxNjUyODN9.tB6O0DVpCIDLr3pWbliQhKF4wakvPm8xvTsNJ0vmCOA"
 	jsonFile, _ := os.Open("data.json")
 
 	PilesFilePath := "./piles.txt"
@@ -74,9 +74,9 @@ func main() {
 	var event []Event
 	json.Unmarshal([]byte(byteValue), &event)
 
-	fmt.Println(event)
-	for _, v := range event {
-		// fmt.Println(v.Type)
+	// fmt.Println(event)
+	for k, v := range event {
+		fmt.Println(k, v)
 		switch v.Type {
 		case "A":
 			{
@@ -84,6 +84,8 @@ func main() {
 				carID := getCarID(v.Id)
 				if charge_quantity == 0 {
 					stopCharge(carID)
+					fmt.Println("wron")
+					break
 				}
 				carIdInt, _ := strconv.Atoi(carID)
 				charge_Type := getChargeType(v.CType)
@@ -105,7 +107,7 @@ func main() {
 		}
 		go getWaitArea()
 		go getWaitChargeCar()
-		time.Sleep(30 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 	PilesWrite.Flush()
 	WaitWrite.Flush()
@@ -140,32 +142,32 @@ func getPileTagTy(a string) (id string, pile_type string) {
 
 func stopCharge(carID string) {
 	data := make(map[string]interface{})
-	fmt.Println("dsds")
+	// fmt.Println("dsds")
 	data["car_id"] = carID
 	bytesData, _ := json.Marshal(data)
 	resp, _ := http.Post(URL+"/charge/stop"+Token, "application/json", bytes.NewReader(bytesData))
-	fmt.Println("aaaa")
+	// fmt.Println("aaaa")
 	body, _ := io.ReadAll(resp.Body)
-	fmt.Println("bbbb")
+	// fmt.Println("bbbb")
 
 	fmt.Println(string(body))
 }
 
-func sendCharge(id, typ, quantity int) {
+func sendCharge(id, typ int, quantity float64) {
 	data := make(map[string]interface{})
 	data["car_id"] = id
 	data["charging_type"] = typ
 	data["charging_quantity"] = quantity
 	bytesData, _ := json.Marshal(data)
-	resp, _ := http.Post(URL+"/charge/come"+Token, "application/json", bytes.NewReader(bytesData))
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	http.Post(URL+"/charge/come"+Token, "application/json", bytes.NewReader(bytesData))
+	// body, _ := io.ReadAll(resp.Body)
+	// fmt.Println(string(body))
 }
 
 func sendPileReset(id string, pile_type string) {
-	resp, _ := http.Post(URL+"/admin/pile/"+id+Token+"&pile_type="+pile_type, "application/json", bytes.NewReader([]byte{}))
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	http.Post(URL+"/admin/pile/"+id+Token+"&pile_type="+pile_type, "application/json", bytes.NewReader([]byte{}))
+	// := io.ReadAll(resp.Body)
+	// fmt.Println(string(body))
 }
 func getWaitArea() {
 	resp, err := http.Get(URL + "/charge/list" + Token)
@@ -184,7 +186,6 @@ func getWaitArea() {
 	WaitWrite.Flush()
 	var res []WaitAreaQuest
 	_ = json.Unmarshal(body, &res)
-	fmt.Println(res)
 
 }
 func getWaitChargeCar() {
