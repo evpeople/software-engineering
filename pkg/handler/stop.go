@@ -65,7 +65,7 @@ func Stop(c *gin.Context) {
 	bill.ChargeTime = duration.String() // charging_time 默认为ns
 
 	power := 10
-	if bill.ChargeType == 0 {
+	if bill.ChargeType == constants.QuickCharge {
 		power = 30
 	}
 	bill.ChargeQuantity = duration.Hours() * float64(power) // charging_quantity

@@ -2,9 +2,12 @@ package scheduler
 
 import (
 	"container/list"
+	"context"
 	"sync"
 	"time"
 
+	"github.com/evpeople/softEngineer/pkg/constants"
+	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	// "github.com/evpeople/softEngineer/pkg/errno"
@@ -144,8 +147,16 @@ func (p *Pile) StartChargeNext() {
 			return
 		}
 		car, ok := next.Value.(*Car)
+
 		if ok {
 			//TODO:car start charging here
+			currentBill := &db.Bill{CarId: int(car.carId), BillId: int(car.carId), BillGenTime: time.Now().Format(constants.TimeLayoutStr), PileId: p.PileId, ChargeType: car.chargingType}
+
+			currentBill.StartTime = time.Now().Format(constants.TimeLayoutStr) // start_time
+			err := db.CreateBill(context.Background(), []*db.Bill{currentBill})
+			if err != nil {
+				logrus.Debug(err)
+			}
 			p.chargingCar = car //charging car
 			p.WaitingArea.Remove(p.WaitingArea.Front())
 		}
