@@ -27,7 +27,9 @@ func Stop(c *gin.Context) {
 	}
 	if len(params.CarId) == 0 {
 		logrus.Debug(params)
+		logrus.Debug("wwwwww")
 		SendBaseResponse(c, errno.ParamErr, nil)
+		return
 	}
 
 	temp_car_id, _ := strconv.ParseInt(params.CarId, 10, 64)
@@ -35,6 +37,9 @@ func Stop(c *gin.Context) {
 	// if userId != strconv.Itoa(tmp_id) {
 	// 	logrus.Debug(params)
 	// 	SendBaseResponse(c, errno.ParamErr, nil)
+	// 	logrus.Debug("yyyyyyy")
+	// 	SendBaseResponse(c, errno.ParamErr, nil)
+	// 	return
 	// }
 	// 修改车辆状态
 	car, _ := db.GetCarFromCarID(context.Background(), temp_car_id)
@@ -43,6 +48,7 @@ func Stop(c *gin.Context) {
 	if err != nil {
 		logrus.Debug("update Cars failed")
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
+		return
 	}
 
 	// 修改对应详单
@@ -79,8 +85,9 @@ func Stop(c *gin.Context) {
 	if err != nil {
 		logrus.Debug("update Cars failed")
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
+		return
 	}
-
+	logrus.Debug(bill)
 	scheduler.WhenChargingStop(bill.CarId, bill.PileId)
 
 	sendStopResponse(c, errno.Success)

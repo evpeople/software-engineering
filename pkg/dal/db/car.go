@@ -51,7 +51,13 @@ func GetUserIDFromCarID(ctx context.Context, carID int64) (int, error) {
 func CreateCar(ctx context.Context, cars []*Car) error {
 	return DB.WithContext(ctx).Create(cars).Error
 }
+
+// BatteryCap int
+// UserRefer  int
+// User       User `gorm:"foreignKey:UserRefer"`
+// IsCharge   bool
 func UpdateCar(ctx context.Context, a_car *Car) error {
+	// return DB.WithContext(ctx).Select("battery_cap", "user_refer", "user", "is_charge").Where("pile_id = ?", a_car.ID).Updates(a_car).Error
 	return DB.WithContext(ctx).Updates(a_car).Error
 }
 func IsCharging(carID int) (bool, error) {
