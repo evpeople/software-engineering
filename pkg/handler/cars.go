@@ -40,11 +40,11 @@ func GetCarsInfo(c *gin.Context) {
 	var car *scheduler.Car
 
 	//! test code
-	pile.ChargeArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
-	pile.ChargeArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
-	pile.ChargeArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
+	pile.WaitingArea.PushBack(scheduler.NewCar(2, 1, 0, 0, 1000))
+	pile.WaitingArea.PushBack(scheduler.NewCar(2, 2, 0, 0, 1000))
+	pile.WaitingArea.PushBack(scheduler.NewCar(2, 3, 0, 0, 1050))
 
-	if len := pile.ChargeArea.Len(); len == 0 {
+	if len := pile.WaitingArea.Len(); len == 0 {
 		// 队列中没有车
 		logrus.Debug(errno.NoWaitingCar.Error())
 		SendCarsResponse(c, errno.NoWaitingCar, nil)
@@ -54,7 +54,7 @@ func GetCarsInfo(c *gin.Context) {
 		carsInfoVar = make([]CarInfo, len)
 
 		// 设置当前正在充电的车的返回信息
-		car = pile.ChargeArea.Front().Value.(*scheduler.Car)
+		car = pile.WaitingArea.Front().Value.(*scheduler.Car)
 		carsInfoVar[0].UserID = car.GetUserId()
 		carsInfoVar[0].CarID = car.GetCarId()
 		carsInfoVar[0].RequestedQuantity = float64(car.GetChargingQuantity())
@@ -89,7 +89,7 @@ func GetCarsInfo(c *gin.Context) {
 
 		// 获取后续等待车辆的信息
 		n := 1
-		for i := pile.ChargeArea.Front().Next(); i != nil; i = i.Next() {
+		for i := pile.WaitingArea.Front().Next(); i != nil; i = i.Next() {
 			car = i.Value.(*scheduler.Car)
 			carsInfoVar[n].UserID = car.GetUserId()
 			carsInfoVar[n].CarID = car.GetCarId()
