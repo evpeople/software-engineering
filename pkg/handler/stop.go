@@ -51,11 +51,16 @@ func Stop(c *gin.Context) {
 
 	// bill_id, bill_gen_time, pile_id, start_time, charge_type 在开始充电时就填写好了
 
-	bill.EndTime = time.Now().Format(constants.TimeLayoutStr) // end_time
-
+	TimeNow := time.Now().Format(constants.TimeLayoutStr) // end_time
 	loc, _ := time.LoadLocation("Local")
 	start_time, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
-	duration := time.Since(start_time) // 充电持续时间
+	time_now, _ := time.ParseInLocation(constants.TimeLayoutStr, TimeNow, loc)
+	dur := time_now.Sub(start_time).Nanoseconds() * constants.Scale // 实际差了多少ns
+	ns, _ := time.ParseDuration("1ns")
+	end_time := start_time.Add(ns * time.Duration(dur)) // 实际结束时间
+	bill.EndTime = end_time.Format(constants.TimeLayoutStr)
+
+	duration := end_time.Sub(start_time) // 充电持续时间
 
 	bill.ChargeTime = duration.String() // charging_time 默认为ns
 
