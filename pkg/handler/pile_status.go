@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	//"crypto/md5"
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
@@ -65,3 +66,25 @@ func sendPileResponse(c *gin.Context, err error, data []PileRepo) {
 		Pile:       data,
 	})
 }
+
+//todo
+/*
+func CreatePile(req *db.PileInfo) (uint, error) {
+	users, err := db.QueryPileExist(context.Background(), req.UserName)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		h := md5.New()
+		if _, err = io.WriteString(h, req.Password); err != nil {
+			return 0, err
+		}
+		passWord := fmt.Sprintf("%x", h.Sum(nil))
+		ur := []*db.PileInfo{{
+			UserName: req.UserName,
+			Password: passWord,
+		}}
+		err := db.CreatePile(context.Background(), ur)
+		return ur[0].ID, err
+	} else {
+		return users.ID, errno.UserAlreadyExistErr
+	}
+}
+*/

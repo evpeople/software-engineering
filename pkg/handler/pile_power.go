@@ -21,17 +21,24 @@ type PowerResp struct {
 func ResetPilePower(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		logrus.Debug(err)
+		logrus.Debug("Param got wrong", err)
 		sendPowerResponse(c, errno.ConvertErr(err), false)
 		return
 	}
+	ty, err := strconv.Atoi(c.Query("pile_type"))
+	if err != nil {
+		logrus.Debug("Query got wrong", err)
+		sendPowerResponse(c, errno.ConvertErr(err), false)
+	}
 	//找到对应充电桩
-	tarPile, err := db.MGetPileTag(context.Background(), int64(id))
+	tarPile, err := db.MGetPileTag(context.Background(), int64(id), int64(ty))
 	if err != nil {
 		logrus.Debug("Get PileID wrong", err.Error())
 		sendPowerResponse(c, errno.ConvertErr(err), false)
 	}
+	logrus.Debug("Before: ", tarPile.IsWork)
 	tarPile.IsWork = !tarPile.IsWork
+	logrus.Debug("After: ", tarPile.IsWork)
 	err = db.UpdatePile(context.Background(), tarPile)
 	if err != nil {
 		logrus.Debug("**update pile status failed")
