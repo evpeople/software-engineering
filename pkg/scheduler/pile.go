@@ -148,7 +148,10 @@ func (p *Pile) StartChargeNext() {
 		currentBill := &db.Bill{CarId: int(car.carId), BillId: int(car.carId), BillGenTime: time.Now().Format(constants.TimeLayoutStr), PileId: p.PileId, ChargeType: car.chargingType}
 		if ok {
 			currentBill.StartTime = time.Now().Format(constants.TimeLayoutStr) // start_time
-			db.CreateBill(context.Background(), []*db.Bill{currentBill})
+			err := db.CreateBill(context.Background(), []*db.Bill{currentBill})
+			if err != nil {
+				logrus.Debug(err)
+			}
 			p.chargingCar = car //charging car
 			p.WaitingArea.Remove(p.WaitingArea.Front())
 		}
