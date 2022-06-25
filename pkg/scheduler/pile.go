@@ -198,9 +198,9 @@ func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {
 	var p *Pile
 	var piles *list.List
 
-	if pileType == ChargingType_Fast {
+	if pileType == constants.ChargingType_Fast {
 		piles = S.fastCharingPile
-	} else if pileType == ChargingType_Trickle {
+	} else if pileType == constants.ChargingType_Trickle {
 		piles = S.trickleChargingPile
 	} else {
 		return nil

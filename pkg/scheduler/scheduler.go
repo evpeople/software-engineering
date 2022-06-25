@@ -6,17 +6,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
-	ChargingType_Fast    = 0
-	ChargingType_Trickle = 1
-
 	DefaultTrickleChargingPileNum = 2
-	DefaultFastCharingPileNum     = 3
-	DefaultWaitingAreaSize        = 100
+	DefaultFastCharingPileNum     = 1
+	DefaultWaitingAreaSize        = 10
 	DefaultChargingQueueLen       = 3
 	DefaultFastPower              = 30
 	DefaultTricklePower           = 10
@@ -36,7 +34,7 @@ func Init() {
 	S.fastPileSignal = semaphore.NewWeighted(int64(S.fastCharingPileNum * S.ChargingQueueLen))
 	S.fastWaitingSignal = semaphore.NewWeighted(int64(S.waitingAreaSize))
 	S.fastWaitingSignal.Acquire(context.Background(), int64(S.waitingAreaSize))
-	S.tricklePileSignal = semaphore.NewWeighted(int64(S.fastCharingPileNum * S.ChargingQueueLen))
+	S.tricklePileSignal = semaphore.NewWeighted(int64(S.trickleChargingPileNum * S.ChargingQueueLen))
 	S.trickleWaitingSignal = semaphore.NewWeighted(int64(S.waitingAreaSize))
 	S.trickleWaitingSignal.Acquire(context.Background(), int64(S.waitingAreaSize))
 	//todo: init by reading config text
@@ -45,13 +43,13 @@ func Init() {
 	S.fastCharingPile = list.New()
 
 	for i := 0; i < S.fastCharingPileNum; i++ {
-		S.fastCharingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Fast, int64(i+1), DefaultFastPower, On, S.fastPileSignal))
+		S.fastCharingPile.PushBack(NewPile(i, S.ChargingQueueLen, constants.ChargingType_Fast, int64(i+1), DefaultFastPower, On, S.fastPileSignal))
 	}
 	//trickleChargingPile
 	S.trickleChargingPile = list.New()
 
 	for i := 0; i < S.trickleChargingPileNum; i++ {
-		S.trickleChargingPile.PushBack(NewPile(i, S.ChargingQueueLen, ChargingType_Trickle, int64(i+1), DefaultTricklePower, On, S.tricklePileSignal))
+		S.trickleChargingPile.PushBack(NewPile(i, S.ChargingQueueLen, constants.ChargingType_Trickle, int64(i+1), DefaultTricklePower, On, S.tricklePileSignal))
 	}
 	S.WaitingArea = list.New()
 	S.RunScheduler()
@@ -81,33 +79,6 @@ func (s *Scheduler) isFull() bool {
 	return s.WaitingArea.Len() >= s.waitingAreaSize
 }
 
-//whenCarComing trys to put the car in the queue, if the queue is full return false else return true
-func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity float64) (int64, int) {
-	if S.isFull() {
-		return 0, 0 //queue if full
-	} else {
-		S.lock.Lock()
-		S.WaitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
-		nextQueueId++
-		S.number++
-		S.lock.Unlock()
-		if chargingType == ChargingType_Trickle {
-			S.trickleWaitingSignal.Release(1)
-			logrus.Debug("rel wait", chargingType)
-		}
-		if chargingType == ChargingType_Fast {
-			logrus.Debug("rel wait", chargingType)
-			S.fastWaitingSignal.Release(1)
-		}
-		return nextQueueId - 1, S.number
-	}
-
-}
-
-func queryFor(userId int64) {
-
-}
-
 func (s *Scheduler) RunScheduler() {
 	go func() {
 		s.runFastOrTrickle(true)
@@ -126,12 +97,12 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 	if fast {
 		PileSignal = s.fastPileSignal
 		WaitSignal = s.fastWaitingSignal
-		ChargeType = ChargingType_Fast
+		ChargeType = constants.ChargingType_Fast
 		piles = s.fastCharingPile
 	} else {
 		PileSignal = s.tricklePileSignal
 		WaitSignal = s.trickleWaitingSignal
-		ChargeType = ChargingType_Trickle
+		ChargeType = constants.ChargingType_Trickle
 		piles = s.trickleChargingPile
 	}
 
@@ -201,3 +172,77 @@ func chooseAPile(piles *list.List) *Pile {
 }
 
 //todo: other methods of Scheduler
+
+//whenCarComing trys to put the car in the queue, if the queue is full return false else return true
+func WhenCarComing(userId int64, carId int64, chargingType int, chargingQuantity float64) (int64, int, bool) {
+	resp := false
+	queueId := int64(-1)
+	num := -1
+
+	if chargingQuantity < 0 { //change type
+		S.lock.Lock()
+		for e := S.WaitingArea.Front(); e != nil; e = e.Next() {
+			if car, ok := e.Value.(*Car); ok && car.carId == carId {
+				S.WaitingArea.Remove(e)
+				logrus.Debug("changing car type ", carId, "from", car.chargingType, " to ", chargingType)
+				car.chargingType = chargingType
+				S.WaitingArea.PushBack(car)
+				resp = true
+				nextQueueId++
+				queueId = nextQueueId - 1
+				num = S.number
+				break
+			}
+		}
+		S.lock.Unlock()
+	} else if chargingType == constants.ChargingType_ChangeQuantity { //change quantity
+		S.lock.Lock()
+		for e := S.WaitingArea.Front(); e != nil; e = e.Next() {
+			if car, ok := e.Value.(*Car); ok && car.carId == carId {
+				logrus.Debug("changing car quantity ", carId, "from", car.carId, " to ", chargingQuantity)
+				car.chargingQuantity = chargingQuantity
+				resp = true
+				queueId = car.queueId
+				num = S.number
+				break
+			}
+		}
+		S.lock.Unlock()
+	} else if !S.isFull() {
+		S.lock.Lock()
+		S.WaitingArea.PushBack(NewCar(userId, carId, nextQueueId, chargingType, chargingQuantity))
+		nextQueueId++
+		S.number++
+		resp = true
+		queueId = nextQueueId - 1
+		num = S.number
+		S.lock.Unlock()
+
+	}
+
+	if resp {
+		if chargingType == constants.ChargingType_Trickle {
+			S.trickleWaitingSignal.Release(1)
+			logrus.Debug("rel wait", chargingType)
+		} else if chargingType == constants.ChargingType_Fast {
+			logrus.Debug("rel wait", chargingType)
+			S.fastWaitingSignal.Release(1)
+		}
+	}
+
+	return queueId, num, resp
+
+}
+
+func WhenChargingStop(carId int, pileId int) {
+	S.lock.Lock()
+	pile := GetPileById(pileId)
+	pile.CarsLock.Lock()
+	if int(pile.chargingCar.carId) == carId {
+		pile.chargingCar = nil
+		pile.reStart()
+	}
+	pile.CarsLock.Unlock()
+
+	S.lock.Unlock()
+}
