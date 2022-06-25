@@ -11,8 +11,8 @@ import (
 )
 
 func init() {
-	scheduler.Init()
 	dal.Init()
+	scheduler.Init()
 }
 func main() {
 	r := setupRouter()
