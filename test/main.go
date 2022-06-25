@@ -189,6 +189,7 @@ func getWaitArea() {
 }
 func getWaitChargeCar() {
 	piles := [5]Pile{
+
 		{
 			Pile_type: 0,
 			Pile_tag:  1,
@@ -198,16 +199,16 @@ func getWaitChargeCar() {
 			Pile_tag:  2,
 		},
 		{
-			Pile_type: 1,
-			Pile_tag:  1,
-		},
-		{
-			Pile_type: 1,
-			Pile_tag:  2,
-		},
-		{
-			Pile_type: 1,
+			Pile_type: 0,
 			Pile_tag:  3,
+		},
+		{
+			Pile_type: 1,
+			Pile_tag:  1,
+		},
+		{
+			Pile_type: 1,
+			Pile_tag:  2,
 		},
 	}
 
