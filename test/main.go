@@ -38,7 +38,7 @@ func main() {
 	// 打开json文件
 	// URL = "http://122.9.146.200:8080/v1"
 	URL = "http://192.168.147.122:8080/v1"
-	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MjEsImV4cCI6MTY1NjE2ODg4Mywib3JpZ19pYXQiOjE2NTYxNjUyODN9.tB6O0DVpCIDLr3pWbliQhKF4wakvPm8xvTsNJ0vmCOA"
+	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MjIsImV4cCI6MTY1NjE3NDg3MSwib3JpZ19pYXQiOjE2NTYxNzEyNzF9.XJ9HqPn1atkwjg_zci0RXX4uacXqKbsjnvFsc11aYMc"
 	jsonFile, _ := os.Open("data.json")
 
 	PilesFilePath := "./piles.txt"
@@ -84,7 +84,6 @@ func main() {
 				carID := getCarID(v.Id)
 				if charge_quantity == 0 {
 					stopCharge(carID)
-					fmt.Println("wron")
 					break
 				}
 				carIdInt, _ := strconv.Atoi(carID)
@@ -107,7 +106,7 @@ func main() {
 		}
 		go getWaitArea()
 		go getWaitChargeCar()
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 	PilesWrite.Flush()
 	WaitWrite.Flush()
