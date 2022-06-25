@@ -124,7 +124,7 @@ func (s *Scheduler) runFastOrTrickle(fast bool) {
 				pile.CarsLock.Lock()
 				pile.WaitingArea.PushBack(car)
 				logrus.Info("#car ", car.carId, " is sending to pile(", pile.emptyTimePredict, ") ", pile.PileId)
-				if pile.WaitingArea.Len() == 1 && pile.chargingCar == nil { //pile is empty
+				if pile.WaitingArea.Len() == 1 && pile.ChargingCar == nil { //pile is empty
 					logrus.Debug("pile ", pile.PileId, " has a queue now. ")
 					pile.StartChargeNext()
 					pile.emptyTimePredict = time.Now().Unix() + pile.chargeTime(car.chargingQuantity)
@@ -303,8 +303,8 @@ func WhenChargingStop(carId int, pileId int) {
 	S.Lock.Lock()
 	pile := GetPileById(pileId)
 	pile.CarsLock.Lock()
-	if int(pile.chargingCar.carId) == carId {
-		pile.chargingCar = nil
+	if int(pile.ChargingCar.carId) == carId {
+		pile.ChargingCar = nil
 		pile.reStart()
 	}
 	pile.CarsLock.Unlock()
@@ -318,9 +318,9 @@ func ResetPileState(pileId int) {
 	if pile != nil {
 		if pile.isAlive() {
 			pile.shutdown()
-			if pile.chargingCar != nil {
+			if pile.ChargingCar != nil {
 				pile.CarsLock.Lock()
-				car := pile.chargingCar
+				car := pile.ChargingCar
 				WhenFinishCharging(car.carId)
 
 				S.WaitingArea.PushFront(NewCar(car.userId, car.carId, nextQueueId, car.chargingType, car.chargingQuantity))
