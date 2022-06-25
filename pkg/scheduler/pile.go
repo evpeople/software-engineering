@@ -5,14 +5,14 @@ import (
 	"context"
 	"sync"
 	"time"
-	"errors"
+	//"errors"
 
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
-	"github.com/evpeople/softEngineer/pkg/errno"
-	"gorm.io/gorm"
+	//"github.com/evpeople/softEngineer/pkg/errno"
+	//"gorm.io/gorm"
 )
 
 // 充电桩状态的枚举类型
@@ -122,7 +122,7 @@ func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power
 
 func CreatePile(req *db.PileInfo) (error) {
 	err := db.QueryPileExist(context.Background(), req.PileTag, req.PileType)
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+	//if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		curPile := []*db.PileInfo{{
 			PileID:req.PileID,
 			PileType:req.PileType,
@@ -133,11 +133,11 @@ func CreatePile(req *db.PileInfo) (error) {
 			ChargingTotalQuantity:req.ChargingTotalQuantity,
 			Power:req.Power,
 		}}
-		err := db.CreatePile(context.Background(), curPile)
+		err = db.CreatePile(context.Background(), curPile)
 		return err
-	} else {
-		return errno.UserAlreadyExistErr
-	}
+	//} else {
+	//	return errno.UserAlreadyExistErr
+	//}
 }
 
 func (p *Pile) isAlive() bool {

@@ -61,11 +61,14 @@ func UpdatePile(ctx context.Context, a_pile *PileInfo) error {
 		"charging_total_quantity", "updated_at").Where("pile_id = ?", a_pile.PileID).Updates(a_pile).Error
 }
 
-func QueryPileExist(ctx context.Context, pileTag int, pileType int) (error) {
-	res := new(PileInfo)
-	if err := DB.First(res, "pile_tag = ? AND pile_type = ?", pileTag, pileType).Error; err != nil {
-		//没有找到数据，可能返回的是 RecordNotExist
-		return err
-	}
+func QueryPileExist(ctx context.Context, pileTag int, pileType int) error {
+	/*
+		res := new(PileInfo)
+		if err := DB.First(res, "pile_tag = ? AND pile_type = ?", pileTag, pileType).Error; err != nil {
+			//没有找到数据，可能返回的是 RecordNotExist
+			//logrus.Debug("SB", err.Error())
+			return err
+		}
+	*/
 	return nil
 }
