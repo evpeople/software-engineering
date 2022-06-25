@@ -122,6 +122,7 @@ func GetCarsInfo(c *gin.Context) {
 
 			n++
 		}
+		pile.CarsLock.Unlock()
 		SendCarsResponse(c, errno.Success, carsInfoVar)
 	}
 }
