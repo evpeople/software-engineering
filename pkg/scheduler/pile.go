@@ -3,17 +3,17 @@ package scheduler
 import (
 	"container/list"
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"errors"
 
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
+	"github.com/evpeople/softEngineer/pkg/errno"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
-	"github.com/evpeople/softEngineer/pkg/errno"
 	"gorm.io/gorm"
 )
 
@@ -116,25 +116,25 @@ func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power
 	res.ChargingTotalQuantity = 0
 	res.Power = power
 	err := CreatePile(res)
-		if err != nil {
-			logrus.Debug(err)
-		}
+	if err != nil {
+		logrus.Debug(err)
+	}
 	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0,
 		siganl, time.Now().Unix(), sync.Mutex{}, time.Now().Unix(), list.New(), nil, sync.Mutex{}}
 }
 
-func CreatePile(req *db.PileInfo) (error) {
+func CreatePile(req *db.PileInfo) error {
 	err := db.QueryPileExist(context.Background(), req.PileTag, req.PileType)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		curPile := []*db.PileInfo{{
-			PileID:req.PileID,
-			PileType:req.PileType,
-			PileTag:req.PileTag,
-			IsWork:req.IsWork,
-			ChargingTotalCount:req.ChargingTotalCount,
-			ChargingTotalTime:req.ChargingTotalTime,
-			ChargingTotalQuantity:req.ChargingTotalQuantity,
-			Power:req.Power,
+			PileID:                req.PileID,
+			PileType:              req.PileType,
+			PileTag:               req.PileTag,
+			IsWork:                req.IsWork,
+			ChargingTotalCount:    req.ChargingTotalCount,
+			ChargingTotalTime:     req.ChargingTotalTime,
+			ChargingTotalQuantity: req.ChargingTotalQuantity,
+			Power:                 req.Power,
 		}}
 		err = db.CreatePile(context.Background(), curPile)
 		return err
@@ -224,35 +224,7 @@ func (p *Pile) StartChargeNext() {
 
 				//TODO: finish a charing: set the bill finish and other things here
 				//TODO: when add codes notice that no blocking alows here
-				// 结束充电
-				bill, _ := db.GetBillFromBillId(context.Background(), car.carId)
-
-				TimeNow := time.Now().Format(constants.TimeLayoutStr) // end_time
-				loc, _ := time.LoadLocation("Local")
-				start_time, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
-				time_now, _ := time.ParseInLocation(constants.TimeLayoutStr, TimeNow, loc)
-				dur := time_now.Sub(start_time).Nanoseconds() * constants.Scale // 实际差了多少ns
-				ns, _ := time.ParseDuration("1ns")
-				end_time := start_time.Add(ns * time.Duration(dur)) // 实际结束时间
-				bill.EndTime = end_time.Format(constants.TimeLayoutStr)
-
-				duration := end_time.Sub(start_time)
-				bill.ChargeTime = duration.String() // 充电持续时间
-
-				power := 10
-				if bill.ChargeType == constants.QuickCharge {
-					power = 30
-				}
-				bill.ChargeQuantity = duration.Hours() * float64(power) // 充电量
-
-				bill.ServiceFee = 0.8 * bill.ChargeQuantity // 三个费用
-				bill.ChargeFee = CalChargeFee(bill.StartTime, bill.EndTime, power)
-				bill.TotalFee = bill.ServiceFee + bill.ChargeFee
-
-				err := db.UpdateBill(context.Background(), bill)
-				if err != nil {
-					logrus.Debug(err)
-				}
+				WhenFinishCharging(car.carId)
 
 				p.CarsLock.Unlock()
 				p.StartChargeNext()
@@ -262,6 +234,38 @@ func (p *Pile) StartChargeNext() {
 
 	}()
 
+}
+
+func WhenFinishCharging(carId int64) {
+	// 结束充电
+	bill, _ := db.GetBillFromBillId(context.Background(), carId)
+
+	TimeNow := time.Now().Format(constants.TimeLayoutStr) // end_time
+	loc, _ := time.LoadLocation("Local")
+	start_time, _ := time.ParseInLocation(constants.TimeLayoutStr, bill.StartTime, loc)
+	time_now, _ := time.ParseInLocation(constants.TimeLayoutStr, TimeNow, loc)
+	dur := time_now.Sub(start_time).Nanoseconds() * constants.Scale // 实际差了多少ns
+	ns, _ := time.ParseDuration("1ns")
+	end_time := start_time.Add(ns * time.Duration(dur)) // 实际结束时间
+	bill.EndTime = end_time.Format(constants.TimeLayoutStr)
+
+	duration := end_time.Sub(start_time)
+	bill.ChargeTime = duration.String() // 充电持续时间
+
+	power := 10
+	if bill.ChargeType == constants.QuickCharge {
+		power = 30
+	}
+	bill.ChargeQuantity = duration.Hours() * float64(power) // 充电量
+
+	bill.ServiceFee = 0.8 * bill.ChargeQuantity // 三个费用
+	bill.ChargeFee = CalChargeFee(bill.StartTime, bill.EndTime, power)
+	bill.TotalFee = bill.ServiceFee + bill.ChargeFee
+
+	err := db.UpdateBill(context.Background(), bill)
+	if err != nil {
+		logrus.Debug(err)
+	}
 }
 
 func GetPileByTypeTag(pileType int64, pileTag int64) *Pile {

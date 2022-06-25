@@ -7,6 +7,7 @@ import (
 
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
+	"github.com/evpeople/softEngineer/pkg/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -44,6 +45,8 @@ func ResetPilePower(c *gin.Context) {
 		logrus.Debug("**update pile status failed")
 		sendPowerResponse(c, errno.ConvertErr(err), false)
 	}
+
+	scheduler.ResetPileState(tarPile.PileID)
 	sendPowerResponse(c, errno.Success, tarPile.IsWork)
 }
 

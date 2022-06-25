@@ -311,3 +311,27 @@ func WhenChargingStop(carId int, pileId int) {
 
 	S.Lock.Unlock()
 }
+
+func ResetPileState(pileId int) {
+	pile := GetPileById(pileId)
+	S.Lock.Lock()
+	if pile != nil {
+		if pile.isAlive() {
+			pile.shutdown()
+			if pile.chargingCar != nil {
+				pile.CarsLock.Lock()
+				car := pile.chargingCar
+				WhenFinishCharging(car.carId)
+
+				S.WaitingArea.PushFront(NewCar(car.userId, car.carId, nextQueueId, car.chargingType, car.chargingQuantity))
+				nextQueueId++
+				S.number++
+
+				pile.CarsLock.Unlock()
+			}
+		} else {
+			pile.reStart()
+		}
+	}
+	S.Lock.Unlock()
+}
