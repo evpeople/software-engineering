@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"github.com/evpeople/softEngineer/pkg/scheduler"
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/evpeople/softEngineer/pkg/errno"
@@ -79,6 +79,8 @@ func Stop(c *gin.Context) {
 		logrus.Debug("update Cars failed")
 		SendBaseResponse(c, errno.ConvertErr(err), nil)
 	}
+	
+	scheduler.WhenChargingStop(bill.CarId,bill.PileId)
 
 	sendStopResponse(c, errno.Success)
 }

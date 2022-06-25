@@ -25,8 +25,8 @@ func Charge(c *gin.Context) {
 		return
 	}
 	logrus.Debug("car_id ", params.CarId, " ask for charge", params.ChargingQuantity, " type", params.ChargingType)
-	queueId, num := scheduler.WhenCarComing(userId, params.CarId, params.ChargingType, params.ChargingQuantity)
-	sendChargingResponse(c, errno.Success, chargingRespData{queueId > 0, queueId, num})
+	queueId, num,ok := scheduler.WhenCarComing(userId, params.CarId, params.ChargingType, params.ChargingQuantity)
+	sendChargingResponse(c, errno.Success, chargingRespData{ok, queueId, num})
 }
 
 type ChargingResponse struct {
