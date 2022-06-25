@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,6 +17,11 @@ type Event struct {
 	CType string `json:"CType"`
 	Num   int    `json:"Num"`
 }
+type WaitAreaQuest struct {
+	CarId    int `json:"car_id"`
+	Ctype    int `json:"ctype"`
+	Quantity int `json:"quantity"`
+}
 
 var URL string
 var Token string
@@ -24,7 +30,7 @@ func main() {
 	// 打开json文件
 	// URL = "http://122.9.146.200:8080/v1"
 	URL = "http://192.168.147.122:8080/v1"
-	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTcsImV4cCI6MTY1NjEzNTgwNSwib3JpZ19pYXQiOjE2NTYxMzIyMDV9.AjyNJ7se2rpnHPSCmtU_BM7KC8CSHGkequlsMYeQm_g"
+	Token = "?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MTgsImV4cCI6MTY1NjE0MDQzNywib3JpZ19pYXQiOjE2NTYxMzY4Mzd9.xtCJAU6R2ceEGZPj2h5I583KANpiDRCuiQWnot5df08"
 	jsonFile, err := os.Open("data.json")
 
 	// 最好要处理以下错误
@@ -42,6 +48,7 @@ func main() {
 
 	fmt.Println(event)
 	for _, v := range event {
+		fmt.Println(v.Type)
 		switch v.Type {
 		case "A":
 			{
@@ -69,6 +76,7 @@ func main() {
 			}
 		}
 	}
+	getWaitArea()
 }
 
 func getCarID(a string) string {
@@ -88,22 +96,26 @@ func getChargeType(a string) (ctype int) {
 	return
 }
 
-func getPileTagTy(a string) (id string, pile_type int) {
+func getPileTagTy(a string) (id string, pile_type string) {
 	id = a[1:]
 	if tag := a[0]; tag == 'F' {
-		pile_type = 0
+		pile_type = "0"
 	} else if tag == 'T' {
-		pile_type = 1
+		pile_type = "1"
 	}
 	return
 }
 
 func stopCharge(carID string) {
 	data := make(map[string]interface{})
+	fmt.Println("dsds")
 	data["car_id"] = carID
 	bytesData, _ := json.Marshal(data)
 	resp, _ := http.Post(URL+"/charge/stop"+Token, "application/json", bytes.NewReader(bytesData))
+	fmt.Println("aaaa")
 	body, _ := io.ReadAll(resp.Body)
+	fmt.Println("bbbb")
+
 	fmt.Println(string(body))
 }
 
@@ -118,12 +130,22 @@ func sendCharge(id, typ, quantity int) {
 	fmt.Println(string(body))
 }
 
-func sendPileReset(id string, pile_type int) {
-	data := make(map[string]interface{})
-	data["id"] = id
-	data["pile_type"] = pile_type
-	bytesData, _ := json.Marshal(data)
-	resp, _ := http.Post(URL+"/admin/pile/"+id+Token, "application/json", bytes.NewReader(bytesData))
+func sendPileReset(id string, pile_type string) {
+	resp, _ := http.Post(URL+"/admin/pile/"+id+Token+"&pile_type="+pile_type, "application/json", bytes.NewReader([]byte{}))
 	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
+}
+func getWaitArea() {
+	// URL := "http://122.9.146.200:8080/v1"
+	resp, err := http.Get(URL + "/charge/list" + Token)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+	var res []WaitAreaQuest
+	_ = json.Unmarshal(body, &res)
+	// arrWaitArea := [3]int{res.CarId, res.Ctype, res.Quantity}
+	fmt.Println(res)
 }
