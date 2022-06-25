@@ -55,7 +55,7 @@ type Pile struct {
 
 	emptyTimePredict int64
 	WaitingArea      *list.List
-	chargingCar      *Car
+	ChargingCar      *Car
 	CarsLock         sync.Mutex //lock for above 3
 	// 充电时长（小时）=实际充电度数/充电功率(度/小时)，需要的时候再计算
 }
@@ -182,7 +182,7 @@ func (p *Pile) StartChargeNext() {
 		p.CarsLock.Lock()
 		next := p.WaitingArea.Front()
 		if next == nil { //pile is empty
-			p.chargingCar = nil //charging nil
+			p.ChargingCar = nil //charging nil
 			logrus.Debug("pile ", p.PileId, " temp sleep")
 			p.CarsLock.Unlock()
 			return
@@ -198,7 +198,7 @@ func (p *Pile) StartChargeNext() {
 			if err != nil {
 				logrus.Debug(err)
 			}
-			p.chargingCar = car //charging car
+			p.ChargingCar = car //charging car
 			p.WaitingArea.Remove(p.WaitingArea.Front())
 		}
 		p.CarsLock.Unlock()
