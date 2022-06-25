@@ -85,7 +85,7 @@ func GetCarsInfo(c *gin.Context) {
 
 		// 计算当前正在充电的车，已经充的电量和费用
 		carsInfoVar[0].ChargedQuantity = remainTime.Hours() * float64(pile.Power)
-		carsInfoVar[0].CurrentFee = CalChargeFee(bill.StartTime, time.Now().Format(constants.TimeLayoutStr), carsInfoVar[0].ChargedQuantity)
+		carsInfoVar[0].CurrentFee = CalChargeFee(bill.StartTime, time.Now().Format(constants.TimeLayoutStr), int(pile.Power))
 
 		// 获取后续等待车辆的信息
 		n := 1
