@@ -136,16 +136,17 @@ func sendPileReset(id string, pile_type string) {
 	fmt.Println(string(body))
 }
 func getWaitArea() {
-	// URL := "http://122.9.146.200:8080/v1"
 	resp, err := http.Get(URL + "/charge/list" + Token)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
+	// var out bytes.Buffer
+	// json.Indent(&out, body, "", "\t")
+	// fmt.Printf("student=%v\n", out.String())
 	fmt.Println(string(body))
 	var res []WaitAreaQuest
 	_ = json.Unmarshal(body, &res)
-	// arrWaitArea := [3]int{res.CarId, res.Ctype, res.Quantity}
 	fmt.Println(res)
 }
