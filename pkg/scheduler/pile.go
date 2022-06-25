@@ -7,12 +7,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"errors"
 
 	"github.com/evpeople/softEngineer/pkg/constants"
 	"github.com/evpeople/softEngineer/pkg/dal/db"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
-	// "github.com/evpeople/softEngineer/pkg/errno"
+	"github.com/evpeople/softEngineer/pkg/errno"
+	"gorm.io/gorm"
 )
 
 // 充电桩状态的枚举类型
@@ -100,8 +102,45 @@ type Pile struct {
 // }
 
 func NewPile(pileId int, maxWaitingNum int, pileType int64, pileTag int64, power float32, status PileStatus, siganl *semaphore.Weighted) *Pile {
+	res := new(db.PileInfo)
+	res.PileID = pileId
+	res.PileType = int(pileType)
+	res.PileTag = int(pileTag)
+	if status == On {
+		res.IsWork = true
+	} else {
+		res.IsWork = false
+	}
+	res.ChargingTotalCount = 0
+	res.ChargingTotalTime = "0"
+	res.ChargingTotalQuantity = 0
+	res.Power = power
+	err := CreatePile(res)
+		if err != nil {
+			logrus.Debug(err)
+		}
 	return &Pile{pileId, maxWaitingNum, pileType, pileTag, power, status, 0, 0,
 		siganl, time.Now().Unix(), sync.Mutex{}, time.Now().Unix(), list.New(), nil, sync.Mutex{}}
+}
+
+func CreatePile(req *db.PileInfo) (error) {
+	err := db.QueryPileExist(context.Background(), req.PileTag, req.PileType)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		curPile := []*db.PileInfo{{
+			PileID:req.PileID,
+			PileType:req.PileType,
+			PileTag:req.PileTag,
+			IsWork:req.IsWork,
+			ChargingTotalCount:req.ChargingTotalCount,
+			ChargingTotalTime:req.ChargingTotalTime,
+			ChargingTotalQuantity:req.ChargingTotalQuantity,
+			Power:req.Power,
+		}}
+		err = db.CreatePile(context.Background(), curPile)
+		return err
+	} else {
+		return errno.UserAlreadyExistErr
+	}
 }
 
 func (p *Pile) isAlive() bool {

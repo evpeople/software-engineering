@@ -43,6 +43,7 @@ func Init() {
 		}
 	}
 	if !m.HasTable(&PileInfo{}) {
+		//m.DropTable(&PileInfo{}) 
 		if err = m.CreateTable(&PileInfo{}); err != nil {
 			panic(err)
 		}
