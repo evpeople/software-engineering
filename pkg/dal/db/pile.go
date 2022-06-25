@@ -56,16 +56,16 @@ func CreatePile(ctx context.Context, piles []*PileInfo) error {
 }
 
 func UpdatePile(ctx context.Context, a_pile *PileInfo) error {
-	logrus.Debug("In fact: ", a_pile.IsWork)
+	//logrus.Debug("In fact: ", a_pile.IsWork)
 	return DB.WithContext(ctx).Select("is_work", "charging_total_count", "charging_total_time",
 		"charging_total_quantity", "updated_at").Where("pile_id = ?", a_pile.PileID).Updates(a_pile).Error
 }
 
-func QueryPileExist(ctx context.Context, pileId string) (*PileInfo, error) {
+func QueryPileExist(ctx context.Context, pileTag int, pileType int) (error) {
 	res := new(PileInfo)
-	if err := DB.First(res, "pile_id = ?", pileId).Error; err != nil {
+	if err := DB.First(res, "pile_tag = ? AND pile_type = ?", pileTag, pileType).Error; err != nil {
 		//没有找到数据，可能返回的是 RecordNotExist
-		return res, err
+		return err
 	}
-	return res, nil
+	return nil
 }
